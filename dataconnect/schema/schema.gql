@@ -1,0 +1,169 @@
+# ========================
+# USERS
+# ========================
+type User @table {
+  id: String! @default(expr: "auth.uid")
+  displayName: String!
+  email: String!
+  role: String! # 'owner' or 'seeker'
+  createdAt: Timestamp! @default(expr: "request.time")
+  photoUrl: String
+  phoneNumber: String
+  bio: String
+  address: String
+}
+
+# ========================
+# PROPERTIES
+# ========================
+type Property @table {
+  owner: User!
+  title: String!
+  description: String!
+  type: String! # 'Apartment', 'House', 'Condo', 'Townhouse', 'Studio'
+  monthlyRent: Float!
+  bedrooms: Int!
+  bathrooms: Float!
+  squareFootage: Int!
+  address: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  status: String! @default(value: "Available") # 'Available', 'Rented', 'Pending', 'Maintenance'
+  createdAt: Timestamp! @default(expr: "request.time")
+  amenities: [String]
+  photos: [String]
+  latitude: Float
+  longitude: Float
+  petFriendly: Boolean @default(value: false)
+  parkingSpaces: Int @default(value: 0)
+  yearBuilt: Int
+  featured: Boolean @default(value: false)
+}
+
+# ========================
+# SAVED / FAVORITED PROPERTIES
+# ========================
+type SavedProperty @table {
+  user: User!
+  property: Property!
+  savedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ========================
+# PROPERTY VIEWINGS (Book a Walk)
+# ========================
+type PropertyViewing @table {
+  property: Property!
+  seeker: User!
+  owner: User!
+  scheduledDate: Date!
+  scheduledTime: String! # e.g. '10:00 AM'
+  status: String! @default(value: "Pending") # 'Pending', 'Confirmed', 'Completed', 'Canceled'
+  notes: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# ========================
+# PROPERTY APPLICATIONS
+# ========================
+type PropertyApplication @table {
+  property: Property!
+  applicant: User!
+  owner: User!
+  status: String! @default(value: "Pending") # 'Pending', 'Approved', 'Rejected', 'Withdrawn'
+  message: String
+  moveInDate: Date
+  employmentStatus: String
+  monthlyIncome: Float
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# ========================
+# LEASES
+# ========================
+type Lease @table {
+  owner: User!
+  tenant: User!
+  property: Property!
+  startDate: Date!
+  endDate: Date!
+  monthlyRent: Float!
+  securityDeposit: Float
+  status: String! @default(value: "Pending") # 'Active', 'Pending', 'Ended', 'Terminated'
+  createdAt: Timestamp! @default(expr: "request.time")
+  documents: [String]
+  autoRenew: Boolean @default(value: false)
+}
+
+# ========================
+# MAINTENANCE REQUESTS
+# ========================
+type MaintenanceRequest @table {
+  property: Property!
+  requester: User!
+  assignedTo: User
+  title: String!
+  description: String!
+  priority: String! # 'Low', 'Medium', 'High', 'Urgent'
+  status: String! @default(value: "New") # 'New', 'In Progress', 'Completed', 'Canceled'
+  category: String # 'Plumbing', 'Electrical', 'HVAC', 'Appliance', 'Structural', 'Other'
+  createdAt: Timestamp! @default(expr: "request.time")
+  resolvedAt: Timestamp
+  photos: [String]
+  estimatedCost: Float
+  actualCost: Float
+}
+
+# ========================
+# PAYMENTS
+# ========================
+type Payment @table {
+  lease: Lease!
+  payer: User!
+  amount: Float!
+  dueDate: Date!
+  status: String! @default(value: "Pending") # 'Paid', 'Pending', 'Overdue', 'Failed'
+  type: String! # 'Rent', 'Deposit', 'Fee', 'Maintenance', 'Utility'
+  createdAt: Timestamp! @default(expr: "request.time")
+  paidDate: Date
+  transactionId: String
+  paymentMethod: String # 'Card', 'Bank Transfer', 'Mobile Money'
+  lateFee: Float @default(value: 0)
+}
+
+# ========================
+# MESSAGES
+# ========================
+type Message @table {
+  sender: User!
+  receiver: User!
+  property: Property
+  content: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+  read: Boolean! @default(value: false)
+}
+
+# ========================
+# NOTIFICATIONS
+# ========================
+type Notification @table {
+  user: User!
+  title: String!
+  body: String!
+  type: String! # 'payment', 'maintenance', 'lease', 'message', 'viewing', 'application', 'system'
+  referenceId: String # ID of related entity
+  read: Boolean! @default(value: false)
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# ========================
+# REVIEWS
+# ========================
+type Review @table {
+  reviewer: User!
+  property: Property!
+  rating: Int! # 1-5
+  comment: String
+  createdAt: Timestamp! @default(expr: "request.time")
+}

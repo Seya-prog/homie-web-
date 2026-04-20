@@ -1,0 +1,436 @@
+# ============================================================
+# USER OPERATIONS
+# ============================================================
+
+mutation CreateUser($id: String!, $displayName: String!, $email: String!, $role: String!, $photoUrl: String, $phoneNumber: String)
+  @auth(level: USER, insecureReason: "User creates their own profile on signup") {
+  user_insert(data: {
+    id: $id,
+    displayName: $displayName,
+    email: $email,
+    role: $role,
+    photoUrl: $photoUrl,
+    phoneNumber: $phoneNumber
+  })
+}
+
+query GetUser($id: String!)
+  @auth(level: USER, insecureReason: "Users look up other users profiles") {
+  user(id: $id) {
+    id, displayName, email, role, photoUrl, phoneNumber, bio, address, createdAt
+  }
+}
+
+mutation UpdateUser($displayName: String, $photoUrl: String, $phoneNumber: String, $bio: String, $address: String)
+  @auth(level: USER) {
+  user_update(id_expr: "auth.uid", data: {
+    displayName: $displayName,
+    photoUrl: $photoUrl,
+    phoneNumber: $phoneNumber,
+    bio: $bio,
+    address: $address
+  })
+}
+
+# ============================================================
+# PROPERTY OPERATIONS
+# ============================================================
+
+mutation CreateProperty(
+  $title: String!, $description: String!, $type: String!,
+  $monthlyRent: Float!, $bedrooms: Int!, $bathrooms: Float!, $squareFootage: Int!,
+  $address: String!, $city: String!, $state: String!, $zipCode: String!,
+  $amenities: [String!], $photos: [String!], $latitude: Float, $longitude: Float,
+  $petFriendly: Boolean, $parkingSpaces: Int, $yearBuilt: Int
+) @auth(level: USER) {
+  property_insert(data: {
+    owner: { id_expr: "auth.uid" },
+    title: $title, description: $description, type: $type,
+    monthlyRent: $monthlyRent, bedrooms: $bedrooms, bathrooms: $bathrooms,
+    squareFootage: $squareFootage, address: $address, city: $city, state: $state,
+    zipCode: $zipCode, amenities: $amenities, photos: $photos,
+    latitude: $latitude, longitude: $longitude,
+    petFriendly: $petFriendly, parkingSpaces: $parkingSpaces, yearBuilt: $yearBuilt
+  })
+}
+
+mutation UpdateProperty($id: UUID!, $status: String, $monthlyRent: Float, $title: String, $description: String)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  property_update(id: $id, data: {
+    status: $status,
+    monthlyRent: $monthlyRent,
+    title: $title,
+    description: $description
+  })
+}
+
+mutation DeleteProperty($id: UUID!)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  property_delete(id: $id)
+}
+
+query ListAvailableProperties
+  @auth(level: PUBLIC, insecureReason: "Public property listings visible to everyone") {
+  properties(where: { status: { eq: "Available" } }, orderBy: [{ createdAt: DESC }]) {
+    id, title, description, type, monthlyRent, bedrooms, bathrooms, squareFootage,
+    address, city, state, zipCode, status, amenities, photos, latitude, longitude,
+    petFriendly, parkingSpaces, createdAt, featured,
+    owner { id, displayName, photoUrl }
+  }
+}
+
+query GetProperty($id: UUID!)
+  @auth(level: PUBLIC, insecureReason: "Property details visible to everyone") {
+  property(id: $id) {
+    id, title, description, type, monthlyRent, bedrooms, bathrooms, squareFootage,
+    address, city, state, zipCode, status, amenities, photos, latitude, longitude,
+    petFriendly, parkingSpaces, yearBuilt, createdAt, featured,
+    owner { id, displayName, email, photoUrl, phoneNumber }
+  }
+}
+
+query ListMyProperties @auth(level: USER) {
+  properties(where: { owner: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ createdAt: DESC }]) {
+    id, title, type, monthlyRent, bedrooms, bathrooms, squareFootage,
+    address, city, state, status, photos, createdAt
+  }
+}
+
+query ListFeaturedProperties
+  @auth(level: PUBLIC, insecureReason: "Featured properties visible to everyone") {
+  properties(where: { featured: { eq: true }, status: { eq: "Available" } }, orderBy: [{ createdAt: DESC }]) {
+    id, title, type, monthlyRent, bedrooms, bathrooms, squareFootage,
+    address, city, state, photos, latitude, longitude,
+    owner { id, displayName, photoUrl }
+  }
+}
+
+query SearchProperties($city: String!, $minPrice: Float, $maxPrice: Float, $bedrooms: Int)
+  @auth(level: PUBLIC, insecureReason: "Search is public") {
+  properties(where: {
+    city: { eq: $city },
+    status: { eq: "Available" },
+    monthlyRent: { ge: $minPrice, le: $maxPrice },
+    bedrooms: { ge: $bedrooms }
+  }, orderBy: [{ monthlyRent: ASC }]) {
+    id, title, type, monthlyRent, bedrooms, bathrooms, squareFootage,
+    address, city, state, photos, latitude, longitude, petFriendly,
+    owner { id, displayName, photoUrl }
+  }
+}
+
+# ============================================================
+# SAVED PROPERTIES (Favorites)
+# ============================================================
+
+mutation SaveProperty($propertyId: UUID!) @auth(level: USER) {
+  savedProperty_insert(data: {
+    user: { id_expr: "auth.uid" },
+    property: { id: $propertyId }
+  })
+}
+
+mutation UnsaveProperty($id: UUID!)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  savedProperty_delete(id: $id)
+}
+
+query ListSavedProperties @auth(level: USER) {
+  savedProperties(where: { user: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ savedAt: DESC }]) {
+    id, savedAt,
+    property {
+      id, title, type, monthlyRent, bedrooms, bathrooms, squareFootage,
+      address, city, state, photos, status,
+      owner { id, displayName }
+    }
+  }
+}
+
+# ============================================================
+# PROPERTY VIEWINGS
+# ============================================================
+
+mutation CreateViewing($propertyId: UUID!, $ownerId: String!, $scheduledDate: Date!, $scheduledTime: String!, $notes: String) @auth(level: USER) {
+  propertyViewing_insert(data: {
+    property: { id: $propertyId },
+    seeker: { id_expr: "auth.uid" },
+    owner: { id: $ownerId },
+    scheduledDate: $scheduledDate,
+    scheduledTime: $scheduledTime,
+    notes: $notes
+  })
+}
+
+mutation UpdateViewingStatus($id: UUID!, $status: String!)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  propertyViewing_update(id: $id, data: { status: $status })
+}
+
+query ListSeekerViewings @auth(level: USER) {
+  propertyViewings(where: { seeker: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ scheduledDate: ASC }]) {
+    id, scheduledDate, scheduledTime, status, notes, createdAt,
+    property { id, title, address, city, photos },
+    owner { id, displayName, phoneNumber }
+  }
+}
+
+query ListOwnerViewings @auth(level: USER) {
+  propertyViewings(where: { owner: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ scheduledDate: ASC }]) {
+    id, scheduledDate, scheduledTime, status, notes, createdAt,
+    property { id, title, address },
+    seeker { id, displayName, email, phoneNumber }
+  }
+}
+
+# ============================================================
+# PROPERTY APPLICATIONS
+# ============================================================
+
+mutation CreateApplication($propertyId: UUID!, $ownerId: String!, $message: String, $moveInDate: Date, $employmentStatus: String, $monthlyIncome: Float) @auth(level: USER) {
+  propertyApplication_insert(data: {
+    property: { id: $propertyId },
+    applicant: { id_expr: "auth.uid" },
+    owner: { id: $ownerId },
+    message: $message,
+    moveInDate: $moveInDate,
+    employmentStatus: $employmentStatus,
+    monthlyIncome: $monthlyIncome
+  })
+}
+
+mutation UpdateApplicationStatus($id: UUID!, $status: String!)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  propertyApplication_update(id: $id, data: { status: $status })
+}
+
+query ListSeekerApplications @auth(level: USER) {
+  propertyApplications(where: { applicant: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ createdAt: DESC }]) {
+    id, status, message, moveInDate, createdAt,
+    property { id, title, address, city, photos, monthlyRent }
+  }
+}
+
+query ListOwnerApplications @auth(level: USER) {
+  propertyApplications(where: { owner: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ createdAt: DESC }]) {
+    id, status, message, moveInDate, employmentStatus, monthlyIncome, createdAt,
+    property { id, title, address },
+    applicant { id, displayName, email, phoneNumber }
+  }
+}
+
+# ============================================================
+# LEASE OPERATIONS
+# ============================================================
+
+mutation CreateLease($tenantId: String!, $propertyId: UUID!, $startDate: Date!, $endDate: Date!, $monthlyRent: Float!, $securityDeposit: Float) @auth(level: USER) {
+  lease_insert(data: {
+    owner: { id_expr: "auth.uid" },
+    tenant: { id: $tenantId },
+    property: { id: $propertyId },
+    startDate: $startDate, endDate: $endDate, monthlyRent: $monthlyRent,
+    securityDeposit: $securityDeposit
+  })
+}
+
+mutation UpdateLeaseStatus($id: UUID!, $status: String!)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  lease_update(id: $id, data: { status: $status })
+}
+
+query ListTenantLeases @auth(level: USER) {
+  leases(where: { tenant: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ startDate: DESC }]) {
+    id, startDate, endDate, monthlyRent, securityDeposit, status, documents, autoRenew, createdAt,
+    property { id, title, address, city, photos },
+    owner { id, displayName, email, phoneNumber }
+  }
+}
+
+query ListOwnerLeases @auth(level: USER) {
+  leases(where: { owner: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ startDate: DESC }]) {
+    id, startDate, endDate, monthlyRent, securityDeposit, status, documents, autoRenew, createdAt,
+    property { id, title, address, city, photos },
+    tenant { id, displayName, email, phoneNumber }
+  }
+}
+
+query GetLease($id: UUID!)
+  @auth(level: USER, insecureReason: "Lease access validated client-side") {
+  lease(id: $id) {
+    id, startDate, endDate, monthlyRent, securityDeposit, status, documents, autoRenew, createdAt,
+    property { id, title, address, city, state, photos, type },
+    owner { id, displayName, email, phoneNumber, photoUrl },
+    tenant { id, displayName, email, phoneNumber, photoUrl }
+  }
+}
+
+# ============================================================
+# MAINTENANCE OPERATIONS
+# ============================================================
+
+mutation CreateMaintenanceRequest($propertyId: UUID!, $title: String!, $description: String!, $priority: String!, $category: String, $photos: [String!]) @auth(level: USER) {
+  maintenanceRequest_insert(data: {
+    property: { id: $propertyId },
+    requester: { id_expr: "auth.uid" },
+    title: $title, description: $description, priority: $priority,
+    category: $category, photos: $photos
+  })
+}
+
+mutation UpdateMaintenanceRequest($id: UUID!, $status: String, $assignedToId: String)
+  @auth(level: USER, insecureReason: "Ownership validated client-side") {
+  maintenanceRequest_update(id: $id, data: {
+    status: $status,
+    assignedTo: { id: $assignedToId }
+  })
+}
+
+query ListTenantMaintenanceRequests @auth(level: USER) {
+  maintenanceRequests(where: { requester: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ createdAt: DESC }]) {
+    id, title, description, priority, status, category, photos, createdAt, estimatedCost,
+    property { id, title, address },
+    assignedTo { id, displayName }
+  }
+}
+
+query ListOwnerMaintenanceRequests @auth(level: USER) {
+  maintenanceRequests(
+    where: { property: { owner: { id: { eq_expr: "auth.uid" } } } },
+    orderBy: [{ createdAt: DESC }]
+  ) {
+    id, title, description, priority, status, category, photos, createdAt, estimatedCost, actualCost,
+    property { id, title, address },
+    requester { id, displayName, email, phoneNumber }
+  }
+}
+
+# ============================================================
+# PAYMENT OPERATIONS
+# ============================================================
+
+mutation CreatePayment($leaseId: UUID!, $amount: Float!, $dueDate: Date!, $type: String!, $paymentMethod: String) @auth(level: USER) {
+  payment_insert(data: {
+    lease: { id: $leaseId },
+    payer: { id_expr: "auth.uid" },
+    amount: $amount, dueDate: $dueDate, type: $type,
+    paymentMethod: $paymentMethod
+  })
+}
+
+mutation MarkPaymentPaid($id: UUID!, $paidDate: Date!, $transactionId: String, $paymentMethod: String)
+  @auth(level: USER, insecureReason: "Payment ownership validated client-side") {
+  payment_update(id: $id, data: {
+    status: "Paid",
+    paidDate: $paidDate,
+    transactionId: $transactionId,
+    paymentMethod: $paymentMethod
+  })
+}
+
+query ListTenantPayments @auth(level: USER) {
+  payments(where: { payer: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ dueDate: DESC }]) {
+    id, amount, dueDate, paidDate, status, type, paymentMethod, transactionId, lateFee, createdAt,
+    lease { id, property { id, title, address } }
+  }
+}
+
+query ListOwnerPayments @auth(level: USER) {
+  payments(
+    where: { lease: { owner: { id: { eq_expr: "auth.uid" } } } },
+    orderBy: [{ dueDate: DESC }]
+  ) {
+    id, amount, dueDate, paidDate, status, type, paymentMethod, lateFee, createdAt,
+    payer { id, displayName, email },
+    lease { id, property { id, title, address } }
+  }
+}
+
+# ============================================================
+# MESSAGE OPERATIONS
+# ============================================================
+
+mutation SendMessage($receiverId: String!, $propertyId: UUID, $content: String!) @auth(level: USER) {
+  message_insert(data: {
+    sender: { id_expr: "auth.uid" },
+    receiver: { id: $receiverId },
+    property: { id: $propertyId },
+    content: $content
+  })
+}
+
+mutation MarkMessageRead($id: UUID!)
+  @auth(level: USER, insecureReason: "Message ownership validated client-side") {
+  message_update(id: $id, data: { read: true })
+}
+
+query ListMessages @auth(level: USER) {
+  messages(where: { receiver: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ createdAt: DESC }]) {
+    id, content, read, createdAt,
+    sender { id, displayName, photoUrl },
+    property { id, title }
+  }
+}
+
+query ListConversation($otherUserId: String!)
+  @auth(level: USER, insecureReason: "Conversation filtered by auth.uid on one side") {
+  messages(
+    where: {
+      _or: [
+        { sender: { id: { eq_expr: "auth.uid" } }, receiver: { id: { eq: $otherUserId } } },
+        { sender: { id: { eq: $otherUserId } }, receiver: { id: { eq_expr: "auth.uid" } } }
+      ]
+    },
+    orderBy: [{ createdAt: ASC }]
+  ) {
+    id, content, read, createdAt,
+    sender { id, displayName, photoUrl }
+  }
+}
+
+# ============================================================
+# NOTIFICATION OPERATIONS
+# ============================================================
+
+mutation CreateNotification($userId: String!, $title: String!, $body: String!, $type: String!, $referenceId: String)
+  @auth(level: USER, insecureReason: "Users create notifications for others on actions") {
+  notification_insert(data: {
+    user: { id: $userId }, title: $title, body: $body,
+    type: $type, referenceId: $referenceId
+  })
+}
+
+mutation MarkNotificationRead($id: UUID!)
+  @auth(level: USER, insecureReason: "Notification ownership validated client-side") {
+  notification_update(id: $id, data: { read: true })
+}
+
+query ListNotifications @auth(level: USER) {
+  notifications(where: { user: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ createdAt: DESC }]) {
+    id, title, body, type, referenceId, read, createdAt
+  }
+}
+
+query UnreadNotificationCount @auth(level: USER) {
+  notifications(where: { user: { id: { eq_expr: "auth.uid" } }, read: { eq: false } }) {
+    id
+  }
+}
+
+# ============================================================
+# REVIEW OPERATIONS
+# ============================================================
+
+mutation CreateReview($propertyId: UUID!, $rating: Int!, $comment: String) @auth(level: USER) {
+  review_insert(data: {
+    reviewer: { id_expr: "auth.uid" },
+    property: { id: $propertyId },
+    rating: $rating, comment: $comment
+  })
+}
+
+query ListPropertyReviews($propertyId: UUID!)
+  @auth(level: PUBLIC, insecureReason: "Reviews are publicly visible") {
+  reviews(where: { property: { id: { eq: $propertyId } } }, orderBy: [{ createdAt: DESC }]) {
+    id, rating, comment, createdAt,
+    reviewer { id, displayName, photoUrl }
+  }
+}

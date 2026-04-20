@@ -1,143 +1,93 @@
-import Link from "next/link";
+"use client";
 
-const properties = [
-  {
-    id: 1,
-    name: "The Glass House",
-    location: "Malibu Heights, CA",
-    price: "$12,500/mo",
-    beds: "4 Beds",
-    baths: "3.5 Baths",
-    sqft: "3,200 sqft",
-    badge: "NEW LISTING",
-    favorited: true,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC61TQxE3jthnv2fQCVm8m2ZFRDjJkVnB7ssu3ed4_rVVvCseNw3xETyGBuk9VgQHl793jTA81ZqfKivPX5rmchqK7bxodhdF4xWQgRUhQfNfVqtbZpzSgNwaBGwm8WmnG6AwDqmmcNdnWzPzvsHX0fS2DWSqe4XxP3n9mg4AhljV3Q6VQPKgXqv4SGnEVfk9nIVrR7nrhtUy3ytyOYBiV4eulkyREC9HnU-5ynlZYv6KKTBOq6Q38TKNUm_vNDmAnsM4Yspyq-_KcM",
-  },
-  {
-    id: 2,
-    name: "Skyline Penthouse",
-    location: "Downtown Metropolis",
-    price: "$4,200,000",
-    beds: "3 Beds",
-    baths: "3 Baths",
-    sqft: "2,150 sqft",
-    badge: null,
-    favorited: false,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDem4719k7uCGAXFt8QadnaxJ-bE5xyUzshDL99W-KEkwGf9gC9fXQfn4f7Yp8V6i0fQz9TboDAiXpuFe9SQ9-KyrymqZPsOKg9U2yjvslROIhA8BokNdWPo4dyiLOnlxihC77R-xy-Wwe1VKCPoHjh1Gtxcb63u_VWP0J-DscZlob338fKieY7urMdDCK3vAOCV6EeZaZ3au6H70xUaJZjH0XpDUjjl3jBAghFzK74KVKSLysziYRAWmaSuKt-M3vBp2Vr4JzKf0zU",
-  },
-  {
-    id: 3,
-    name: "Oakwood Manor",
-    location: "Greenwich Village, CT",
-    price: "$5,800/mo",
-    beds: "5 Beds",
-    baths: "4.5 Baths",
-    sqft: "4,100 sqft",
-    badge: null,
-    favorited: false,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDIqANMXctQDZEIh16t6X8nbemjQYKyIPbk1w1gcEOtYUPxMzjt0GH3P0aSmQ1HA_Ux31HbsOA-zvDD8iHW9o4jhbOvB8SiWZySRJyx5pFCRsJrUZEloVviZKst6SNIfy3qbl6exN2HI8Op9u8Qshw9poGYiG1Z1tb3LXHOQeCrgKmiBLFEH9-I3f_vegQw3he__DaVSYTMsO5Cy2AbITWirbjhDmmsBOD1XZNbifyXtWqVqJRJfW48loHgJeYzf5c_IATHb3sPu7qh",
-  },
-];
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { listFeaturedProperties, listAvailableProperties } from "@/lib/dataService";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyData = any;
 
 export default function FeaturedListings() {
+  const [properties, setProperties] = useState<AnyData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Try featured first, fallback to available
+    listFeaturedProperties()
+      .then((data: AnyData[]) => {
+        if (data.length > 0) return data;
+        return listAvailableProperties();
+      })
+      .then((data: AnyData[]) => setProperties(data.slice(0, 6)))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
-    <section className="py-24 bg-surface-container-low">
-      <div className="max-w-[1440px] mx-auto px-8">
-        {/* Section Header */}
-        <div className="flex justify-between items-end mb-12">
-          <div className="max-w-xl">
-            <h2 className="text-4xl font-bold text-primary mb-4 tracking-tight font-headline">
-              Featured Listings
+    <section style={{ padding: '96px 24px', backgroundColor: '#f8f9fa' }}>
+      <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '48px', gap: '16px' }}>
+          <div>
+            <span className="font-headline" style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#002446' }}>CURATED COLLECTION</span>
+            <h2 className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-0.04em', color: '#191c1d', lineHeight: 1.1, marginTop: '8px' }}>
+              Featured Properties
             </h2>
-            <p className="text-on-surface-variant font-medium">
-              Hand-picked properties selected for their exceptional design and
-              prime locations across the coast.
-            </p>
           </div>
-          <Link href="/listings" className="group flex items-center gap-2 text-primary font-bold hover:gap-4 transition-all">
-            View All
-            <span className="material-symbols-outlined">arrow_forward</span>
+          <Link href="/listings" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#002446', fontWeight: 700, fontSize: '14px', textDecoration: 'none', padding: '8px 0' }}>
+            View All Listings
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_forward</span>
           </Link>
         </div>
 
-        {/* Property Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {properties.map((property) => (
-            <Link
-              href={`/properties/${property.id}`}
-              key={property.name}
-              className="group bg-surface-container-lowest rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 no-underline text-inherit"
-            >
-              {/* Image */}
-              <div className="relative h-72 overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  alt={property.name}
-                  src={property.image}
-                />
-                {property.badge && (
-                  <div className="absolute top-4 right-4 bg-surface-container-lowest/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-primary">
-                    {property.badge}
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 bg-primary text-on-primary px-4 py-2 rounded-lg font-bold shadow-lg">
-                  {property.price}
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="p-6">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-xl font-bold text-primary font-headline">
-                    {property.name}
-                  </h3>
-                  <span
-                    className={`material-symbols-outlined cursor-pointer ${
-                      property.favorited ? "text-secondary" : "text-outline"
-                    }`}
-                    style={
-                      property.favorited
-                        ? { fontVariationSettings: "'FILL' 1" }
-                        : undefined
-                    }
-                  >
-                    favorite
-                  </span>
-                </div>
-                <p className="text-on-surface-variant text-sm mb-6 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm !text-[14px]">
-                    location_on
-                  </span>
-                  {property.location}
-                </p>
-                <div className="flex items-center gap-6 border-t border-surface-container-high pt-6">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-outline">
-                      bed
-                    </span>
-                    <span className="text-sm font-bold">{property.beds}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-outline">
-                      bathtub
-                    </span>
-                    <span className="text-sm font-bold">{property.baths}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-outline">
-                      square_foot
-                    </span>
-                    <span className="text-sm font-bold">{property.sqft}</span>
-                  </div>
-                </div>
-              </div>
+        {/* Grid */}
+        {loading ? (
+          <div style={{ padding: '64px', textAlign: 'center' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#1a3a5f', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+          </div>
+        ) : properties.length === 0 ? (
+          <div style={{ padding: '64px 24px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '16px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '64px', color: '#c3c6cf' }}>home_work</span>
+            <h3 className="text-xl font-bold" style={{ color: '#002446', marginTop: '16px' }}>No Properties Listed Yet</h3>
+            <p style={{ color: '#64748b', marginTop: '8px' }}>Be the first to list your property on Homie.</p>
+            <Link href="/signup" style={{ display: 'inline-block', marginTop: '24px', padding: '14px 32px', backgroundColor: '#002446', color: '#ffffff', borderRadius: '10px', fontWeight: 700, textDecoration: 'none' }}>
+              Get Started
             </Link>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: '24px' }}>
+            {properties.map((prop: AnyData) => (
+              <Link key={prop.id} href={`/property/${prop.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}>
+                  {/* Image */}
+                  <div style={{ position: 'relative', height: '220px', backgroundColor: '#f3f4f5' }}>
+                    {prop.photos?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img alt={prop.title} src={prop.photos[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '64px', color: '#c3c6cf' }}>home</span>
+                      </div>
+                    )}
+                    <span style={{ position: 'absolute', top: '12px', right: '12px', padding: '6px 12px', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', color: '#ffffff', fontSize: '11px', fontWeight: 700, borderRadius: '8px' }}>{prop.type}</span>
+                  </div>
+                  {/* Info */}
+                  <div style={{ padding: '20px' }}>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#002446', marginBottom: '4px' }} className="truncate">{prop.title}</h3>
+                    <p className="truncate" style={{ fontSize: '13px', color: '#64748b' }}>{prop.address || `${prop.city}, ${prop.state}`}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#002446' }}>${prop.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af' }}>/mo</span></span>
+                      <div className="flex" style={{ gap: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#43474e', padding: '4px 8px', backgroundColor: '#f3f4f5', borderRadius: '4px' }}>{prop.bedrooms} bed</span>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#43474e', padding: '4px 8px', backgroundColor: '#f3f4f5', borderRadius: '4px' }}>{prop.bathrooms} bath</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

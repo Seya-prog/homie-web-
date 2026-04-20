@@ -9,47 +9,55 @@ export default function Header() {
   return (
     <header className="bg-white/80 backdrop-blur-xl sticky top-0 z-50 w-full border-b border-outline-variant/20">
       <nav className="flex justify-between items-center w-full px-8 py-4 max-w-[1440px] mx-auto">
-        {/* Logo */}
-        <Link href="/" className="text-2xl font-black tracking-tighter text-primary-container">
-          Homie
-        </Link>
+        {/* Left: Logo + Nav Links */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="text-2xl font-black tracking-tighter text-primary-container">
+            Homie
+          </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-8">
-          <Link
-            href="#"
-            className="text-on-surface font-semibold hover:text-primary-container transition-colors duration-200"
-          >
-            Find a Home
-          </Link>
-          <Link
-            href="#"
-            className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
-          >
-            For Owners
-          </Link>
-          <Link
-            href="#"
-            className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
-          >
-            Marketplace
-          </Link>
-          <Link
-            href="#"
-            className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
-          >
-            About
-          </Link>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link
+              href="/listings"
+              className="text-on-surface font-semibold hover:text-primary-container transition-colors duration-200"
+            >
+              Buy
+            </Link>
+            <Link
+              href="/listings"
+              className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
+            >
+              Rent
+            </Link>
+            <Link
+              href="/signup"
+              className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
+            >
+              Sell
+            </Link>
+            <Link
+              href="/properties/new"
+              className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
+            >
+              List Property
+            </Link>
+            <Link
+              href="/map-search"
+              className="text-on-surface-variant font-medium hover:text-primary-container transition-colors duration-200"
+            >
+              Map Search
+            </Link>
+          </div>
         </div>
 
-        {/* CTA Buttons */}
+        {/* Right: Auth Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <button className="text-on-surface-variant font-semibold hover:text-primary-container px-4 py-2 transition-colors">
-            Sign In
-          </button>
-          <button className="bg-primary text-on-primary font-bold px-6 py-2.5 rounded-lg hover:opacity-90 active:scale-95 transition-all shadow-sm">
-            Get Started
-          </button>
+          <Link href="/login" className="text-on-surface-variant font-semibold hover:text-primary-container px-4 py-2 transition-colors">
+            Log In
+          </Link>
+          <Link href="/signup" className="bg-primary text-on-primary font-bold px-6 py-2.5 rounded-lg hover:opacity-90 active:scale-95 transition-all shadow-sm">
+            Sign Up
+          </Link>
         </div>
 
         {/* Mobile Hamburger */}
@@ -79,25 +87,28 @@ export default function Header() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-outline-variant/20 px-8 py-6 space-y-4 animate-in slide-in-from-top">
-          <Link href="#" className="block text-on-surface font-semibold py-2">
-            Find a Home
+          <Link href="/listings" className="block text-on-surface font-semibold py-2" onClick={() => setMobileMenuOpen(false)}>
+            Buy
           </Link>
-          <Link href="#" className="block text-on-surface-variant font-medium py-2">
-            For Owners
+          <Link href="/listings" className="block text-on-surface-variant font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+            Rent
           </Link>
-          <Link href="#" className="block text-on-surface-variant font-medium py-2">
-            Marketplace
+          <Link href="/signup" className="block text-on-surface-variant font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+            Sell
           </Link>
-          <Link href="#" className="block text-on-surface-variant font-medium py-2">
-            About
+          <Link href="/properties/new" className="block text-on-surface-variant font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+            List Property
+          </Link>
+          <Link href="/map-search" className="block text-on-surface-variant font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+            Map Search
           </Link>
           <hr className="border-outline-variant/30" />
-          <button className="block w-full text-left text-on-surface-variant font-semibold py-2">
-            Sign In
-          </button>
-          <button className="w-full bg-primary text-on-primary font-bold px-6 py-3 rounded-lg">
-            Get Started
-          </button>
+          <Link href="/login" className="block w-full text-left text-on-surface-variant font-semibold py-2" onClick={() => setMobileMenuOpen(false)}>
+            Log In
+          </Link>
+          <Link href="/signup" className="block w-full bg-primary text-on-primary font-bold px-6 py-3 rounded-lg text-center" onClick={() => setMobileMenuOpen(false)}>
+            Sign Up
+          </Link>
         </div>
       )}
     </header>

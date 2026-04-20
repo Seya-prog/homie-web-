@@ -1,25 +1,46 @@
 "use client";
 
-import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import OwnerDashboard from "@/components/OwnerDashboard";
 import SeekerDashboard from "@/components/SeekerDashboard";
-
-type Role = "owner" | "seeker";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
-  // ✅ Change role here: "owner" for property owner, "seeker" for tenant
-  const [role] = useState<Role>("owner");
+  const { role, loading, user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [loading, user, router]);
+
+  if (loading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8f9fa' }}>
+        <div style={{ textAlign: 'center' }}>
+          <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#1a3a5f', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+          <p style={{ marginTop: '16px', color: '#64748b', fontWeight: 500 }}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  const currentRole = role || "seeker";
 
   return (
     <div className="flex" style={{ background: '#f8f9fa', color: '#191c1d', height: '100vh', overflow: 'hidden' }}>
-      <Sidebar role={role} activePage="Dashboard" />
+      <Sidebar role={currentRole} activePage="Dashboard" />
 
       <div className="flex-1 flex flex-col min-w-0" style={{ height: '100vh', overflowY: 'auto' }}>
         <DashboardHeader />
 
-        {role === "owner" ? <OwnerDashboard /> : <SeekerDashboard />}
+        {currentRole === "owner" ? <OwnerDashboard /> : <SeekerDashboard />}
       </div>
 
       {/* Contextual FAB (Mobile only) */}

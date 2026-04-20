@@ -1,55 +1,104 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { listAvailableProperties, searchProperties } from "@/lib/dataService";
 
-const listings = [
-  {
-    id: 1, name: "Modern Riverside Penthouse", price: "$3,200/mo", location: "Downtown Metropolis",
-    beds: 3, baths: 2, sqft: "1,800", badge: "Featured", badgeBg: "#002446", badgeColor: "#ffffff",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA65VDb9rRN4AdAXVUVYmkLmP-hbQ-ui_MtCmB_a0Lchxho7SQPJcQOwYA4U9AdT9OK8jh1UHU3vK8O2WRwFP7nCI5sIMotTx60uud6es-Xblc_5xontCCfsbx6RNvKNRDT8LJ2va92EEZturjXbqGlgyyKzjoFowrRWdM8EDUFEFV0Vqt19PP25UGWKT7dSfb6DKcgU1lgY04m9jIqDbr6_Q8HAJtJgmQZrXN8prQHO_ek3VyBzI6B43NhExxeuAcADvUasQhfrlOq",
-  },
-  {
-    id: 2, name: "Oak Ridge Family Estate", price: "$850,000", location: "North Hills District",
-    beds: 4, baths: 3, sqft: "2,450", badge: "New", badgeBg: "#00422b", badgeColor: "#72af90",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD2jPh83hnXecqmz_q-yZclZD7QLUbLt-sxNVHNg1LtK-EnxGsnn0smVmHel6ABioxBcm86l_aS5_xPp7vQf75VV1tf7jnpD8XiMAEwScRQw-DPEu70raYi--lajTS7AlJhyeVgXebR1od4sX_Zlun68TvefkaBWoNgY5Wea8d-oXeeWlN4Wpe0sAAJ5z_qVdeiqfQAwpA2olXw68gygIrr4DLk3-MB6Lt7aNVj0Fjs3cR-km1c_wx8cdxCX6toV9WNdxWAfXDI2_Zp",
-  },
-  {
-    id: 3, name: "Neo-Industrial Studio", price: "$2,100/mo", location: "Arts District",
-    beds: 1, baths: 1, sqft: "920", badge: null, badgeBg: "", badgeColor: "",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDr_pc2yuVVQDke2uAqvAzrbRC4fP0Bg5GDLO4FGr7Yha2B_n4jJdDtc0l1muz8n3tIunVpjJfG5zxrOi_T_88O2ijQ2IsOkWDgZwZ_nGGj6uH0bjGe86zcheo46QmLf5ZoTj_XCppppIvJECQxlLNPjuHg6V_R4flpC90A1kOOcVqdBJ8DHAkldwb4Kj_cYmftXJvIc7tdhWPFheh4OgFXC4hxZUGrEXnDvOmH0Xaj0rUZ7vBDOOctqK2iokyzFJa1Kqp_R8YPygxS",
-  },
-  {
-    id: 4, name: "Crystal Lake Haven", price: "$1,250,000", location: "Silvermere Lake",
-    beds: 5, baths: 4, sqft: "4,100", badge: null, badgeBg: "", badgeColor: "",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCHpQiuadwMVEkamcCT5vY9371zKehkhGPfdpz17WRAdLvxx3fgg1iV4PyZvZyZkrZ42vfqCkMTv1nM5Xn7xzJ0iHgkUWLFqms-SvHR4Pfe-N-et11BD-ianvLqBFVZ1vO2CQYY6FyAxbwhJCImt5yOA5kk8Yp5XDAxHfIv501BpSX4FBFMv994plUdbUqClNZZEF1SxPeXHuc54lqa-Z-aYDTE3m5L-Fk5EMbL3UDcKv2dnUJMHEEn8eEqtjj22nkKzM_KqNr5xIam",
-  },
-  {
-    id: 5, name: "Skyline View Condos", price: "$4,500/mo", location: "Central Plaza",
-    beds: 2, baths: 2, sqft: "1,200", badge: "Featured", badgeBg: "#002446", badgeColor: "#ffffff",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBXrTpDPFFYSj2GgegjrafkJ7FkeSONoFItKFHtx_BO35-UoJp-wPV_cJ99yL10LMD5Tv7sGAy5PAyCkKBXDvwpfIJHyMKCyZVr42BoU6RcaXeQTxHoD_TYsUJG2SycyIGkTAjZ1n5zL3FdTuheADWIInZk7VD0DC1smN-XSP8i8VLrctKM08GU_3xIznVPtpqe_tw-uzFvqvy0286zXJJCHFX7mcz1Wq_4XUfUiuDl33hXhD8Zrr3QIF0ZIjLrLqW-UEE_BMlNjBB_",
-  },
-  {
-    id: 6, name: "The Solarium Retreat", price: "$1,850,000", location: "Palm Springs Outskirts",
-    beds: 3, baths: 3, sqft: "3,200", badge: null, badgeBg: "", badgeColor: "",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBqL74u5WVxYesyhFK_ZVual2UqFwuNXBPyqysR8U13X1TV9nc7DXJ2SVm2nLagJEmkyGyKTg9-idTIw7WxKOG74wSNkI7trLCCC7I8Yp2XDsua2vI16--RkHIL9QwszaO33uYpLF-ailsTdtgnO0Gro5XtnZWCzKuTiG0KysFDox3fGjJ-_wAe9YtKaBWy9fHy2PRKknZU557xQE0C9phZWPPSXXmmFlMcTP1W7sVl_Mmk2ub-iD4e_BjyFuoM7R05uyhVL9npMwWV",
-  },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyData = any;
 
-const propertyTypes = ["Apartment", "House", "Condo", "Townhouse"];
-const amenitiesList = ["Parking", "Pool", "Gym", "Pet Friendly"];
+const propertyTypes = ["Apartment", "House", "Condo", "Townhouse", "Studio"];
+const amenitiesList = ["Parking", "Pool", "Gym", "Pet Friendly", "Laundry", "AC"];
 const bedroomOpts = ["Any", "1+", "2+", "3+"];
 
 export default function ListingsPage() {
   const [activeNav, setActiveNav] = useState("Discover");
   const [viewMode, setViewMode] = useState("Grid");
   const [activeBed, setActiveBed] = useState("Any");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [properties, setProperties] = useState<AnyData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const toggleFav = (id: number) => {
+  useEffect(() => {
+    listAvailableProperties()
+      .then(setProperties)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setLoading(true);
+      const data = await listAvailableProperties();
+      setProperties(data);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const results = await searchProperties(searchQuery);
+      setProperties(results);
+    } catch (e) { console.error(e); }
+    setLoading(false);
+  };
+
+  const toggleType = (type: string) => {
+    setSelectedTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities(prev =>
+      prev.includes(amenity) ? prev.filter(a => a !== amenity) : [...prev, amenity]
+    );
+  };
+
+  const toggleFav = (id: string) => {
     setFavorites((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]);
   };
+
+  const resetFilters = async () => {
+    setActiveBed("Any");
+    setSelectedTypes([]);
+    setSelectedAmenities([]);
+    setMinPrice("");
+    setMaxPrice("");
+    setSearchQuery("");
+    setLoading(true);
+    const data = await listAvailableProperties();
+    setProperties(data);
+    setLoading(false);
+  };
+
+  const filtered = properties.filter((p: AnyData) => {
+    // Bedroom filter
+    if (activeBed !== "Any") {
+      const minBeds = parseInt(activeBed);
+      if ((p.bedrooms || 0) < minBeds) return false;
+    }
+    // Property type filter
+    if (selectedTypes.length > 0) {
+      if (!selectedTypes.includes(p.type)) return false;
+    }
+    // Amenities filter
+    if (selectedAmenities.length > 0) {
+      const propAmenities: string[] = p.amenities || [];
+      const petCheck = selectedAmenities.includes("Pet Friendly") && !p.petFriendly;
+      const otherAmenities = selectedAmenities.filter(a => a !== "Pet Friendly");
+      const hasAll = otherAmenities.every(a => propAmenities.includes(a));
+      if (petCheck || !hasAll) return false;
+    }
+    // Price range filter
+    if (minPrice && p.monthlyRent < parseFloat(minPrice)) return false;
+    if (maxPrice && p.monthlyRent > parseFloat(maxPrice)) return false;
+    return true;
+  });
 
   return (
     <div style={{ background: '#f8f9fa', color: '#191c1d', minHeight: '100vh' }}>
@@ -57,24 +106,24 @@ export default function ListingsPage() {
       <nav style={{
         position: 'fixed', top: 0, width: '100%', zIndex: 50,
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '0 32px', height: '64px',
+        padding: '0 24px', height: '64px',
         backgroundColor: 'rgba(248,250,252,0.8)', backdropFilter: 'blur(16px)',
       }}>
-        <div className="flex items-center" style={{ gap: '32px' }}>
-          <Link href="/dashboard" style={{ textDecoration: 'none' }}>
-            <span className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#0f172a' }}>EstateManager</span>
+        <div className="flex items-center" style={{ gap: '24px' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, letterSpacing: '-0.05em', color: '#1e3a5f' }}>Homie</span>
           </Link>
-          <div className="flex" style={{ gap: '24px' }}>
-            {["Discover", "Saved", "Inquiries", "Tours"].map((tab) => (
+          <div className="hidden md:flex" style={{ gap: '24px' }}>
+            {["Discover", "Saved", "Map"].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveNav(tab)}
+                onClick={() => { setActiveNav(tab); if (tab === "Map") window.location.href = "/map-search"; }}
                 style={{
                   color: activeNav === tab ? '#0f172a' : '#64748b',
                   fontWeight: activeNav === tab ? 700 : 500,
                   borderBottom: activeNav === tab ? '2px solid #0f172a' : '2px solid transparent',
                   background: 'none', border: 'none', cursor: 'pointer',
-                  paddingBottom: '4px', transition: 'color 0.2s',
+                  paddingBottom: '4px', fontSize: '14px',
                 }}
               >
                 {tab}
@@ -82,41 +131,30 @@ export default function ListingsPage() {
             ))}
           </div>
         </div>
-        <div className="flex items-center" style={{ gap: '16px' }}>
+        <div className="flex items-center" style={{ gap: '12px' }}>
           <div style={{ position: 'relative' }}>
             <span className="material-symbols-outlined" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }}>search</span>
-            <input type="text" placeholder="Search areas..." style={{ paddingLeft: '40px', paddingRight: '16px', padding: '6px 16px 6px 40px', borderRadius: '8px', border: 'none', backgroundColor: '#f1f5f9', fontSize: '14px', width: '256px', outline: 'none' }} />
+            <input
+              type="text"
+              value={searchQuery || ""}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              placeholder="Search city, address..."
+              style={{ paddingLeft: '40px', paddingRight: '16px', padding: '8px 16px 8px 40px', borderRadius: '8px', border: 'none', backgroundColor: '#f1f5f9', fontSize: '14px', width: '220px', outline: 'none', boxSizing: 'border-box' }}
+            />
           </div>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <span className="material-symbols-outlined" style={{ color: '#475569' }}>notifications</span>
-          </button>
-          <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-            <span className="material-symbols-outlined" style={{ color: '#475569' }}>favorite</span>
-          </button>
-          <div style={{ width: '32px', height: '32px', borderRadius: '9999px', overflow: 'hidden', backgroundColor: '#e2e8f0' }}>
-            <img alt="Profile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA60lAYc1puh0mdBFGzS7X1AZ8IWJVhYOupk68nROyx3Fe5qL2y4DD9QlrBRchQj8eUvAu2v0Tl7ku4-5G6cfU96uglT-uCFOhNdrM37wcFj97VUaH4DyXuyXAfqs2W9UBk6h3ZqHmC-zYWv05fxBE0n9s8e7OLxTeDGi6dG_g5POVdbyYB6PvXVwcxlmLzal5s65c6gk07rEw9Do0k-GSigg9Ihh7S8uXPRjQRV--GZIgw3cduDDlRWKOLkDLMA8FsbExrstSwe69y" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          </div>
+          <Link href="/dashboard" style={{ backgroundColor: '#002446', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}>Dashboard</Link>
         </div>
       </nav>
 
       {/* Sidebar Filters */}
-      <aside style={{
+      <aside className="hidden lg:flex" style={{
         height: 'calc(100vh - 64px)', width: '256px', position: 'fixed', left: 0, top: '64px',
-        backgroundColor: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '8px',
+        backgroundColor: '#f8fafc', flexDirection: 'column', gap: '8px',
         padding: '24px', borderRight: '1px solid #f1f5f9', overflowY: 'auto', zIndex: 40,
       }}>
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#9ca3af', marginBottom: '16px' }}>Search Filters</h3>
-
-          {/* Price Range */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#002446', marginBottom: '12px' }}>Price Range</label>
-            <div className="flex" style={{ gap: '8px', marginBottom: '8px' }}>
-              <input type="text" placeholder="Min" style={{ width: '100%', fontSize: '12px', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', outline: 'none' }} />
-              <input type="text" placeholder="Max" style={{ width: '100%', fontSize: '12px', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', backgroundColor: '#ffffff', outline: 'none' }} />
-            </div>
-            <input type="range" style={{ width: '100%', accentColor: '#fc9430' }} />
-          </div>
 
           {/* Property Type */}
           <div style={{ marginBottom: '24px' }}>
@@ -124,7 +162,12 @@ export default function ListingsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {propertyTypes.map((t) => (
                 <label key={t} className="flex items-center" style={{ gap: '8px', fontSize: '14px', color: '#475569', cursor: 'pointer' }}>
-                  <input type="checkbox" style={{ borderRadius: '4px', accentColor: '#002446' }} /> {t}
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(t) || false}
+                    onChange={() => toggleType(t)}
+                    style={{ borderRadius: '4px', accentColor: '#002446' }}
+                  /> {t}
                 </label>
               ))}
             </div>
@@ -135,19 +178,37 @@ export default function ListingsPage() {
             <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#002446', marginBottom: '12px' }}>Bedrooms</label>
             <div className="flex" style={{ backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
               {bedroomOpts.map((b) => (
-                <button
-                  key={b}
-                  onClick={() => setActiveBed(b)}
-                  style={{
-                    flex: 1, padding: '4px', fontSize: '12px', fontWeight: 500, borderRadius: '6px',
-                    backgroundColor: activeBed === b ? '#ffffff' : 'transparent',
-                    boxShadow: activeBed === b ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
-                    border: 'none', cursor: 'pointer',
-                  }}
-                >
+                <button key={b} onClick={() => setActiveBed(b)} style={{
+                  flex: 1, padding: '4px', fontSize: '12px', fontWeight: 500, borderRadius: '6px',
+                  backgroundColor: activeBed === b ? '#ffffff' : 'transparent',
+                  boxShadow: activeBed === b ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                  border: 'none', cursor: 'pointer',
+                }}>
                   {b}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Price Range */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#002446', marginBottom: '12px' }}>Price Range</label>
+            <div className="flex" style={{ gap: '8px' }}>
+              <input
+                type="number"
+                value={minPrice || ""}
+                onChange={e => setMinPrice(e.target.value)}
+                placeholder="Min"
+                style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#f1f5f9', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+              />
+              <span style={{ color: '#9ca3af', alignSelf: 'center' }}>–</span>
+              <input
+                type="number"
+                value={maxPrice || ""}
+                onChange={e => setMaxPrice(e.target.value)}
+                placeholder="Max"
+                style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: 'none', backgroundColor: '#f1f5f9', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
           </div>
 
@@ -157,37 +218,56 @@ export default function ListingsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {amenitiesList.map((a) => (
                 <label key={a} className="flex items-center" style={{ gap: '8px', fontSize: '14px', color: '#475569', cursor: 'pointer' }}>
-                  <input type="checkbox" style={{ borderRadius: '4px', accentColor: '#002446' }} /> {a}
+                  <input
+                    type="checkbox"
+                    checked={selectedAmenities.includes(a) || false}
+                    onChange={() => toggleAmenity(a)}
+                    style={{ borderRadius: '4px', accentColor: '#002446' }}
+                  /> {a}
                 </label>
               ))}
             </div>
           </div>
         </div>
 
+        {/* Active filter count */}
+        {(selectedTypes.length > 0 || selectedAmenities.length > 0 || activeBed !== "Any" || minPrice || maxPrice) && (
+          <div style={{ padding: '8px 12px', backgroundColor: '#d3e3ff', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#002446', marginBottom: '8px' }}>
+            {[
+              selectedTypes.length > 0 ? `${selectedTypes.length} type${selectedTypes.length > 1 ? 's' : ''}` : '',
+              activeBed !== "Any" ? `${activeBed} beds` : '',
+              selectedAmenities.length > 0 ? `${selectedAmenities.length} amenit${selectedAmenities.length > 1 ? 'ies' : 'y'}` : '',
+              (minPrice || maxPrice) ? 'price range' : '',
+            ].filter(Boolean).join(' · ')} active
+          </div>
+        )}
+
         <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <button style={{ width: '100%', padding: '12px 16px', backgroundColor: '#fc9430', color: '#663500', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+          <button onClick={handleSearch} style={{ width: '100%', padding: '12px 16px', backgroundColor: '#fc9430', color: '#663500', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
             Apply Filters
           </button>
-          <button style={{ width: '100%', padding: '12px 16px', backgroundColor: 'transparent', color: '#64748b', fontWeight: 500, borderRadius: '8px', fontSize: '14px', border: 'none', cursor: 'pointer' }}>
+          <button onClick={resetFilters} style={{ width: '100%', padding: '12px 16px', backgroundColor: 'transparent', color: '#64748b', fontWeight: 500, borderRadius: '8px', fontSize: '14px', border: 'none', cursor: 'pointer' }}>
             Reset All
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main style={{ marginLeft: '256px', paddingTop: '96px', padding: '96px 32px 48px', minHeight: '100vh' }}>
+      <main className="lg:ml-[256px]" style={{ paddingTop: '96px', padding: '96px 32px 48px', minHeight: '100vh' }}>
         {/* Header */}
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', gap: '24px', flexWrap: 'wrap' }}>
+        <header className="flex flex-wrap" style={{ justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '40px', gap: '24px' }}>
           <div>
-            <h1 className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.05em', color: '#002446', marginBottom: '8px' }}>Exclusive Listings</h1>
-            <p style={{ color: '#43474e' }}>Showing 1,240 luxury properties available for you</p>
+            <h1 className="font-headline text-3xl md:text-4xl" style={{ fontWeight: 800, letterSpacing: '-0.05em', color: '#002446', marginBottom: '8px' }}>Discover Properties</h1>
+            <p style={{ color: '#43474e' }}>
+              {loading ? 'Loading...' : `Showing ${filtered.length} propert${filtered.length !== 1 ? 'ies' : 'y'}`}
+            </p>
           </div>
           <div className="flex items-center" style={{ gap: '16px' }}>
             <div className="flex" style={{ backgroundColor: '#e7e8e9', padding: '4px', borderRadius: '8px' }}>
               {["Grid", "Map"].map((v) => (
                 <button
                   key={v}
-                  onClick={() => setViewMode(v)}
+                  onClick={() => { setViewMode(v); if (v === "Map") window.location.href = "/map-search"; }}
                   className="flex items-center"
                   style={{
                     gap: '8px', padding: '6px 16px', fontSize: '14px', fontWeight: viewMode === v ? 600 : 500,
@@ -203,124 +283,89 @@ export default function ListingsPage() {
                 </button>
               ))}
             </div>
-            <select style={{ backgroundColor: '#ffffff', border: 'none', fontSize: '14px', fontWeight: 500, padding: '10px 16px', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', outline: 'none' }}>
-              <option>Sort By: Newest</option>
-              <option>Price: Low to High</option>
-              <option>Price: High to Low</option>
-              <option>Square Feet</option>
-            </select>
           </div>
         </header>
 
         {/* Property Grid */}
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
-          {listings.map((listing) => (
-            <Link href={`/properties/${listing.id}`} key={listing.id} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <article className="group" style={{ backgroundColor: '#ffffff', borderRadius: '12px', overflow: 'hidden', transition: 'all 0.3s' }}>
-                <div style={{ position: 'relative', height: '256px', overflow: 'hidden' }}>
-                  <img
-                    alt={listing.name}
-                    src={listing.image}
-                    className="group-hover:scale-110"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
-                  />
-                  {listing.badge && (
-                    <div style={{ position: 'absolute', top: '16px', left: '16px' }}>
-                      <span style={{ padding: '4px 12px', backgroundColor: listing.badgeBg, color: listing.badgeColor, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderRadius: '9999px' }}>
-                        {listing.badge}
-                      </span>
-                    </div>
-                  )}
-                  <button
-                    onClick={(e) => { e.preventDefault(); toggleFav(listing.id); }}
-                    style={{
-                      position: 'absolute', top: '16px', right: '16px',
-                      width: '40px', height: '40px',
-                      backgroundColor: favorites.includes(listing.id) ? '#ffffff' : 'rgba(255,255,255,0.2)',
-                      backdropFilter: 'blur(12px)', borderRadius: '9999px',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: favorites.includes(listing.id) ? '#ef4444' : '#ffffff',
-                      border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-                    }}
-                  >
-                    <span className="material-symbols-outlined" style={{ fontVariationSettings: favorites.includes(listing.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
-                  </button>
-                </div>
-                <div style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h3 className="font-headline" style={{ fontSize: '1.125rem', fontWeight: 700, color: '#002446' }}>{listing.name}</h3>
-                    <p className="font-headline" style={{ fontSize: '1.125rem', fontWeight: 800, color: '#002446', whiteSpace: 'nowrap' }}>{listing.price}</p>
+        {loading ? (
+          <div style={{ padding: '64px', textAlign: 'center' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#1a3a5f', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: '64px 24px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '16px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '64px', color: '#c3c6cf' }}>search_off</span>
+            <h3 className="text-xl font-bold" style={{ color: '#002446', marginTop: '16px' }}>No Properties Found</h3>
+            <p style={{ color: '#64748b', marginTop: '8px' }}>Try adjusting your filters or search criteria.</p>
+          </div>
+        ) : (
+          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3" style={{ gap: '24px' }}>
+            {filtered.map((prop: AnyData) => (
+              <Link href={`/properties/${prop.id}`} key={prop.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <article className="group" style={{ backgroundColor: '#ffffff', borderRadius: '12px', overflow: 'hidden', transition: 'all 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <div style={{ position: 'relative', height: '220px', overflow: 'hidden', backgroundColor: '#f3f4f5' }}>
+                    {prop.photos?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        alt={prop.title}
+                        src={prop.photos[0]}
+                        className="group-hover:scale-110"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s' }}
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '64px', color: '#c3c6cf' }}>home</span>
+                      </div>
+                    )}
+                    {prop.featured && (
+                      <div style={{ position: 'absolute', top: '16px', left: '16px' }}>
+                        <span style={{ padding: '4px 12px', backgroundColor: '#002446', color: '#ffffff', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', borderRadius: '9999px' }}>
+                          Featured
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) => { e.preventDefault(); toggleFav(prop.id); }}
+                      style={{
+                        position: 'absolute', top: '16px', right: '16px',
+                        width: '40px', height: '40px',
+                        backgroundColor: favorites.includes(prop.id) ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                        backdropFilter: 'blur(12px)', borderRadius: '9999px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: favorites.includes(prop.id) ? '#ef4444' : '#ffffff',
+                        border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontVariationSettings: favorites.includes(prop.id) ? "'FILL' 1" : "'FILL' 0" }}>favorite</span>
+                    </button>
                   </div>
-                  <p className="flex items-center" style={{ fontSize: '14px', color: '#43474e', gap: '4px', marginBottom: '24px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>location_on</span>
-                    {listing.location}
-                  </p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', borderTop: '1px solid #f3f4f5', color: '#43474e', fontSize: '12px', fontWeight: 600 }}>
-                    <div className="flex items-center" style={{ gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bed</span> {listing.beds} {listing.beds === 1 ? 'Bed' : 'Beds'}
+                  <div style={{ padding: '20px' }}>
+                    <div className="flex flex-wrap" style={{ justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
+                      <h3 className="font-headline truncate" style={{ fontSize: '1.125rem', fontWeight: 700, color: '#002446', maxWidth: '60%' }}>{prop.title}</h3>
+                      <p className="font-headline" style={{ fontSize: '1.125rem', fontWeight: 800, color: '#002446', whiteSpace: 'nowrap' }}>
+                        ${prop.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af' }}>/mo</span>
+                      </p>
                     </div>
-                    <div className="flex items-center" style={{ gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bathtub</span> {listing.baths} {listing.baths === 1 ? 'Bath' : 'Baths'}
-                    </div>
-                    <div className="flex items-center" style={{ gap: '6px' }}>
-                      <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>square_foot</span> {listing.sqft} sqft
+                    <p className="flex items-center truncate" style={{ fontSize: '13px', color: '#43474e', gap: '4px', marginBottom: '16px' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>location_on</span>
+                      {prop.address || `${prop.city}, ${prop.state}`}
+                    </p>
+                    <div className="flex flex-wrap" style={{ justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #f3f4f5', color: '#43474e', fontSize: '12px', fontWeight: 600, gap: '8px' }}>
+                      <div className="flex items-center" style={{ gap: '4px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bed</span> {prop.bedrooms} {prop.bedrooms === 1 ? 'Bed' : 'Beds'}
+                      </div>
+                      <div className="flex items-center" style={{ gap: '4px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bathtub</span> {prop.bathrooms} {prop.bathrooms === 1 ? 'Bath' : 'Baths'}
+                      </div>
+                      <div className="flex items-center" style={{ gap: '4px' }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>square_foot</span> {prop.squareFootage?.toLocaleString()} sqft
+                      </div>
                     </div>
                   </div>
-                </div>
-              </article>
-            </Link>
-          ))}
-        </section>
-
-        {/* Pagination */}
-        <footer style={{ marginTop: '64px', display: 'flex', justifyContent: 'center' }}>
-          <nav className="flex items-center" style={{ gap: '8px' }}>
-            <button
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              className="flex items-center"
-              style={{ height: '40px', padding: '0 16px', gap: '8px', fontSize: '14px', fontWeight: 600, color: '#002446', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: currentPage === 1 ? 'default' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1, transition: 'all 0.2s' }}
-            >
-              <span className="material-symbols-outlined">chevron_left</span> Previous
-            </button>
-            <div className="flex items-center" style={{ gap: '4px', padding: '0 16px' }}>
-              {[1, 2, 3].map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setCurrentPage(p)}
-                  style={{
-                    height: '40px', width: '40px', borderRadius: '8px', fontWeight: currentPage === p ? 700 : 500,
-                    backgroundColor: currentPage === p ? '#002446' : 'transparent',
-                    color: currentPage === p ? '#ffffff' : '#43474e',
-                    boxShadow: currentPage === p ? '0 4px 8px rgba(0,36,70,0.2)' : 'none',
-                    border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
-              <span style={{ padding: '0 8px', color: '#43474e' }}>...</span>
-              <button
-                onClick={() => setCurrentPage(12)}
-                style={{
-                  height: '40px', width: '40px', borderRadius: '8px', fontWeight: currentPage === 12 ? 700 : 500,
-                  backgroundColor: currentPage === 12 ? '#002446' : 'transparent',
-                  color: currentPage === 12 ? '#ffffff' : '#43474e',
-                  border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-                }}
-              >
-                12
-              </button>
-            </div>
-            <button
-              onClick={() => setCurrentPage(Math.min(12, currentPage + 1))}
-              className="flex items-center"
-              style={{ height: '40px', padding: '0 16px', gap: '8px', fontSize: '14px', fontWeight: 600, color: '#002446', borderRadius: '8px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', transition: 'all 0.2s' }}
-            >
-              Next <span className="material-symbols-outlined">chevron_right</span>
-            </button>
-          </nav>
-        </footer>
+                </article>
+              </Link>
+            ))}
+          </section>
+        )}
       </main>
     </div>
   );

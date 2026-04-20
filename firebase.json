@@ -1,0 +1,47 @@
+{
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "dataconnect": {
+    "source": "dataconnect"
+  },
+  "apphosting": [
+    {
+      "backendId": "homie-backend",
+      "rootDir": "homie",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    },
+    {
+      "backendId": "homie-backend",
+      "rootDir": "/",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "functions"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "redirects": [
+      {
+        "source": "**",
+        "destination": "https://homie-backend--homie-properties.us-central1.hosted.app",
+        "type": 302
+      }
+    ]
+  }
+}

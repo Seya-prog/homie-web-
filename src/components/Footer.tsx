@@ -28,56 +28,50 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Resources */}
+          {/* Explore */}
           <div>
-            <h5 className="font-bold text-primary mb-6">Resources</h5>
+            <h5 className="font-bold text-primary mb-6">Explore</h5>
             <ul className="space-y-4 text-sm text-on-surface-variant font-medium">
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Market Analysis</Link>
+                <Link href="/listings">Buy a Home</Link>
               </li>
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Legal Guides</Link>
+                <Link href="/listings">Rent a Home</Link>
               </li>
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Tax Information</Link>
-              </li>
-              <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Moving Partners</Link>
+                <Link href="/map-search">Map Search</Link>
               </li>
             </ul>
           </div>
 
-          {/* Company */}
+          {/* For Owners */}
           <div>
-            <h5 className="font-bold text-primary mb-6">Company</h5>
+            <h5 className="font-bold text-primary mb-6">For Owners</h5>
             <ul className="space-y-4 text-sm text-on-surface-variant font-medium">
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">About Us</Link>
+                <Link href="/signup">Sell a Property</Link>
               </li>
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Careers</Link>
+                <Link href="/properties/new">List a Property</Link>
               </li>
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Press</Link>
-              </li>
-              <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Contact</Link>
+                <Link href="/dashboard">Owner Dashboard</Link>
               </li>
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Account */}
           <div>
-            <h5 className="font-bold text-primary mb-6">Legal</h5>
+            <h5 className="font-bold text-primary mb-6">Account</h5>
             <ul className="space-y-4 text-sm text-on-surface-variant font-medium">
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Privacy Policy</Link>
+                <Link href="/login">Log In</Link>
               </li>
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Terms of Service</Link>
+                <Link href="/signup">Sign Up</Link>
               </li>
               <li className="hover:text-primary cursor-pointer transition-colors">
-                <Link href="#">Fair Housing</Link>
+                <Link href="/dashboard">Dashboard</Link>
               </li>
             </ul>
           </div>

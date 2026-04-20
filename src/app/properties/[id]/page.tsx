@@ -1,45 +1,106 @@
 "use client";
 
 import Link from "next/link";
-import { use } from "react";
+import { use, useEffect, useState, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { getProperty, deleteProperty, updateProperty } from "@/lib/dataService";
+import useGoogleMaps from "@/hooks/useGoogleMaps";
 
-const galleryImages = [
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBwsoix3PNaI26-1C-r66IgwEHvC1b5cPr9v6RkRKvX9S9CYad9_unbfDwQaF4lB-kpbcDSBKifgMDCiolkHciDRhk71hHibnZlTUC9TX8GYX7lEFPr_AL3BF4bUK5DeIYOXBjJUMP2LWme6zu1O-3gKW-v2gPZDcObfpDQldhflqOldYhkz3OXuMKOdFHi-zPzTcpZcX1vgcVBwPd7Zeq2q_tDDNs7wIxFWZvh1bE4MVh9o_eJVuTCvRobAcFunPxnll410UlbeYci", alt: "Modern glass house exterior at dusk", span: "col-span-2 row-span-2" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDcuG7oqTIswIii7GrrhEoQLVNDhi3ajTxR9ewAZyJb-hDX5rqAzhMngSTmtHmIWZ12gVEEOqrh1GmJYV7I2EniP-eGvtH0UXH5KAsI9Jvv4g0-perEg8Fy1MTFaTTLgjeOOFqr3PbmpI3t4JTEfatgA9ncgpXmZdTo8tB9oKH1Ao14zhzqIZrH47QYIbUGsh5kf9GHYdoeXxK-Sg-rmrQIa9D-Jr2oTUAC535e4XAeWEJ7fXT3rNgRUC1duDjL40rRwY09sUeFgagU", alt: "Minimalist luxury living room" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuAkHIhvCeCc6C9L4uONbr4uj1uHW3Sm9TfzOL6eaBIvTHriSyu9n7-AGz8uxknwpD41dLuKDzyBvgPVh18pj3f7uAZZDnPpuYZE8HPOMHi5ZnUcCHMXsklpri-OtVvGf6IAXDnqPwJiUScdd69cMckVYkHidfc0Es8ys1COj4JXbCVd4Y-_baemisS6k3zBicOoU0-ZlBxfXZd1UnSfuMv_45x3OIed3DiBs9o4-zaAluUhoiGoxruayBHIQD0jDtboqLFCwHiRMyAD", alt: "Gourmet kitchen with marble counters" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuBmNdmQ1Nd2nmam3jv32nD8fpscYkdzwL4WI4SgCdY2iy1uO2ZA-Wy_RJ1Fv5YfRzHzfnulBqP6W-YZGaV9Elfl5VxBUdbn2tEFP_QknrFex1KaB4ZMLngtYXe6zW4NJXkpBqqt37xnw68tvNHhYdmxGpgS316EP5T4QguGT77kwiLHtz4vSulOojM3R-sYWtzkd25QdqTBsfNGxyYLELweD_qfVadrSpwMoMS9Lta3eJt4UvBIWtR4pf7UQxzgK9mNCr2IPPqkg8fn", alt: "Primary bedroom with balcony" },
-  { src: "https://lh3.googleusercontent.com/aida-public/AB6AXuDZMV1juGAGc6SxmiNTbcJpFdas48R7PQoqdhv5EtUy6gcaRGBPMLCK7vs3Y8suaL6c5pBqm05oSmUO55MBE-L6FKTt4mMDrkhDmM03yuIH1gOtBJv4_U5-_BbvrbH6kZdXzdYUlb7Xlsbu2eDA9iHLw5h8dd4lrFnBXIwWv8sOKr0PeKwGg1i2TtshenPvMNCHAbyJlkeHoYZ63KTzF6RwbjRF8IzEcFOkN11xPcoxZkz3Hi7_rcRUNtXOQFTY5dM5asrPfW9TsMbk", alt: "Spa bathroom", overlay: true },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyData = any;
 
-const features = [
-  { icon: "bed", label: "Bedrooms", value: "5 Beds" },
-  { icon: "bathtub", label: "Bathrooms", value: "4.5 Baths" },
-  { icon: "square_foot", label: "Living Area", value: "4,250 sq ft" },
-  { icon: "garage", label: "Parking", value: "3 Car Garage" },
-];
+function PropertyLocationMap({ lat, lng, title }: { lat: number, lng: number, title: string }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapsLoaded = useGoogleMaps();
 
-const amenities = [
-  { icon: "pool", name: "Infinity Pool" },
-  { icon: "fitness_center", name: "Private Gym" },
-  { icon: "local_fire_department", name: "Outdoor Firepit" },
-  { icon: "wine_bar", name: "Wine Cellar" },
-  { icon: "smart_toy", name: "Smart Home OS" },
-  { icon: "charging_station", name: "EV Charging" },
-];
+  useEffect(() => {
+    if (mapsLoaded && mapRef.current) {
+      const pos = { lat, lng };
+      const map = new window.google.maps.Map(mapRef.current, {
+        center: pos,
+        zoom: 15,
+        mapId: "d33308f0a48ade0a4dc9cb13",
+        disableDefaultUI: true,
+        zoomControl: true,
+      });
 
-const leaseTermsLeft = [
-  { label: "Security Deposit", value: "$18,500" },
-  { label: "Lease Duration", value: "12 - 36 Months" },
-  { label: "Pets Allowed", value: "Small breeds only" },
-];
-const leaseTermsRight = [
-  { label: "Utilities", value: "Tenant responsible" },
-  { label: "Maintenance", value: "Included" },
-  { label: "Available From", value: "Oct 1, 2024" },
-];
+      // Custom HTML pin for visual consistency
+      const pinEl = document.createElement("div");
+      pinEl.style.cssText = `
+        background: #002446; color: #ffffff; padding: 6px 14px;
+        border-radius: 9999px; font-weight: 700; font-size: 13px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.25); border: 2px solid #ffffff;
+        white-space: nowrap;
+      `;
+      pinEl.textContent = title || "Location";
+
+      new window.google.maps.marker.AdvancedMarkerElement({
+        position: pos,
+        map,
+        content: pinEl,
+      });
+    }
+  }, [mapsLoaded, lat, lng, title]);
+
+  if (!mapsLoaded) {
+    return (
+      <div style={{ height: '320px', width: '100%', borderRadius: '12px', backgroundColor: '#e7e8e9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span className="material-symbols-outlined" style={{ animation: 'spin 1s linear infinite' }}>progress_activity</span>
+      </div>
+    );
+  }
+
+  return <div ref={mapRef} style={{ height: '320px', width: '100%', borderRadius: '12px', overflow: 'hidden', position: 'relative' }} />;
+}
+
+
 
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { user } = useAuth();
+  const [property, setProperty] = useState<AnyData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ title: "", description: "", monthlyRent: 0 });
+
+  useEffect(() => {
+    getProperty(id).then(p => {
+      if (p) {
+        setProperty(p);
+        setEditData({ title: p.title, description: p.description, monthlyRent: p.monthlyRent });
+      }
+    }).catch(console.error);
+  }, [id]);
+
+  if (!property) return <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span className="material-symbols-outlined" style={{ fontSize: '48px', animation: 'spin 1s linear infinite' }}>progress_activity</span></div>;
+
+  const isOwner = user?.uid === property.owner?.id;
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this property?")) return;
+    try {
+      await deleteProperty(id);
+      window.location.href = "/properties";
+    } catch (e) {
+      alert("Failed to delete property");
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateProperty(id, editData);
+      setProperty({ ...property, ...editData });
+      setIsEditing(false);
+    } catch (e) {
+      alert("Failed to save changes");
+    }
+  };
+
+  const dynamicFeatures = [
+    { icon: "bed", label: "Bedrooms", value: `${property.bedrooms || 0} Beds` },
+    { icon: "bathtub", label: "Bathrooms", value: `${property.bathrooms || 0} Baths` },
+    { icon: "square_foot", label: "Living Area", value: `${property.squareFootage?.toLocaleString() || 0} sq ft` },
+    { icon: "garage", label: "Parking", value: `${property.parkingSpaces || 0} Spaces` },
+  ];
 
   return (
     <div style={{ background: '#f8f9fa', color: '#191c1d', minHeight: '100vh' }}>
@@ -76,46 +137,51 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         <nav className="flex items-center" style={{ gap: '8px', fontSize: '14px', color: '#73777f', marginBottom: '32px' }}>
           <Link href="/properties" style={{ color: '#73777f', textDecoration: 'none' }}>Marketplace</Link>
           <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chevron_right</span>
-          <a href="#" style={{ color: '#73777f', textDecoration: 'none' }}>Residential</a>
+          <span style={{ color: '#73777f', textDecoration: 'none' }}>Residential</span>
           <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>chevron_right</span>
-          <span style={{ color: '#191c1d', fontWeight: 500 }}>The Glass House Estate</span>
+          <span style={{ color: '#191c1d', fontWeight: 500 }}>{property.title}</span>
         </nav>
 
         {/* Bento Gallery */}
-        <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: '16px', height: '600px', marginBottom: '48px' }}>
-          {galleryImages.map((img, i) => (
-            <div
-              key={i}
-              style={{
-                gridColumn: i === 0 ? 'span 2' : 'span 1',
-                gridRow: i === 0 ? 'span 2' : 'span 1',
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: '12px',
-              }}
-            >
-              <img
-                alt={img.alt}
-                src={img.src}
-                style={{
-                  width: '100%', height: '100%', objectFit: 'cover',
-                  transition: 'transform 0.7s',
-                  filter: img.overlay ? 'brightness(0.5)' : undefined,
-                }}
-              />
-              {i === 0 && (
-                <div style={{ position: 'absolute', top: '16px', left: '16px', backgroundColor: '#002446', color: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  Premium Listing
+        {property.photos && property.photos.length > 0 && (
+          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gridTemplateRows: 'repeat(2, 1fr)', gap: '16px', height: '600px', marginBottom: '48px' }}>
+            {property.photos.slice(0, 5).map((photoUrl: string, i: number) => {
+              const isMain = i === 0;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    gridColumn: isMain ? 'span 2' : 'span 1',
+                    gridRow: isMain ? 'span 2' : 'span 1',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    borderRadius: '12px',
+                  }}
+                >
+                  <img
+                    alt={`Photo ${i+1}`}
+                    src={photoUrl}
+                    style={{
+                      width: '100%', height: '100%', objectFit: 'cover',
+                      transition: 'transform 0.7s',
+                      filter: i === 4 && property.photos?.length > 5 ? 'brightness(0.5)' : undefined,
+                    }}
+                  />
+                  {isMain && (
+                    <div style={{ position: 'absolute', top: '16px', left: '16px', backgroundColor: '#002446', color: '#ffffff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      Premium Listing
+                    </div>
+                  )}
+                  {i === 4 && property.photos?.length > 5 && (
+                    <button style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: 700, fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer' }}>
+                      + {property.photos.length - 5} More Photos
+                    </button>
+                  )}
                 </div>
-              )}
-              {img.overlay && (
-                <button style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: 700, fontSize: '18px', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  + 12 More Photos
-                </button>
-              )}
-            </div>
-          ))}
-        </section>
+              );
+            })}
+          </section>
+        )}
 
         {/* Main Content Layout */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '48px' }}>
@@ -124,8 +190,12 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             {/* Title */}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <h1 className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#002446' }}>The Glass House Estate</h1>
-                <div className="flex" style={{ gap: '8px' }}>
+                {isEditing ? (
+                  <input type="text" value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#002446', border: '1px solid #c3c6cf', borderRadius: '8px', padding: '8px', width: '100%' }} />
+                ) : (
+                  <h1 className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.025em', color: '#002446' }}>{property.title}</h1>
+                )}
+                <div className="flex" style={{ gap: '8px', marginLeft: '16px' }}>
                   <button style={{ padding: '8px', borderRadius: '9999px', border: '1px solid #c3c6cf', backgroundColor: 'transparent', cursor: 'pointer' }}>
                     <span className="material-symbols-outlined" style={{ color: '#43474e' }}>share</span>
                   </button>
@@ -136,13 +206,13 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               </div>
               <p className="flex items-center" style={{ fontSize: '18px', color: '#43474e', gap: '8px' }}>
                 <span className="material-symbols-outlined" style={{ color: '#914d00' }}>location_on</span>
-                482 North Greenwich Rd, Aspen, CO 81611
+                {property.address}, {property.city}, {property.state} {property.zipCode}
               </p>
             </div>
 
             {/* Key Features */}
             <div className="flex flex-wrap" style={{ gap: '32px', padding: '32px 0', borderTop: '1px solid #edeeef', borderBottom: '1px solid #edeeef' }}>
-              {features.map((f) => (
+              {dynamicFeatures.map((f) => (
                 <div key={f.label} className="flex items-center" style={{ gap: '12px' }}>
                   <div style={{ width: '48px', height: '48px', borderRadius: '12px', backgroundColor: '#edeeef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span className="material-symbols-outlined" style={{ color: '#002446' }}>{f.icon}</span>
@@ -158,72 +228,37 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             {/* Description */}
             <article style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002446' }}>About this property</h2>
-              <p style={{ color: '#43474e', lineHeight: '1.8' }}>
-                Nestled in the heart of the Rocky Mountains, The Glass House Estate represents the pinnacle of modern luxury living. This architectural masterpiece features seamless transitions between indoor and outdoor spaces, with floor-to-ceiling high-performance glass walls that offer breathtaking 270-degree views of the Aspen valley.
-              </p>
-              <p style={{ color: '#43474e', lineHeight: '1.8' }}>
-                Designed by renowned architects, the residence boasts wide-plank white oak flooring, a state-of-the-art Bulthaup kitchen, and a private wellness wing including a sauna and cold plunge pool. The expansive outdoor terrace features a custom infinity-edge pool and a sunken fire pit, perfect for high-altitude entertaining.
-              </p>
+              {isEditing ? (
+                <textarea rows={5} value={editData.description} onChange={e => setEditData({...editData, description: e.target.value})} style={{ color: '#43474e', lineHeight: '1.8', border: '1px solid #c3c6cf', borderRadius: '8px', padding: '8px', width: '100%', resize: 'vertical' }} />
+              ) : (
+                <p style={{ color: '#43474e', lineHeight: '1.8', whiteSpace: 'pre-wrap' }}>
+                  {property.description}
+                </p>
+              )}
             </article>
 
             {/* Amenities */}
-            <section style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002446' }}>Exclusive Amenities</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-                {amenities.map((a) => (
-                  <div key={a.name} className="flex items-center" style={{ gap: '12px' }}>
-                    <span className="material-symbols-outlined" style={{ color: '#72af90' }}>{a.icon}</span>
-                    <span style={{ color: '#191c1d' }}>{a.name}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Lease & Terms */}
-            <section style={{ backgroundColor: '#f3f4f5', padding: '32px', borderRadius: '12px', border: '1px solid rgba(195,198,207,0.3)' }}>
-              <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002446', marginBottom: '24px' }}>Lease &amp; Terms</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {leaseTermsLeft.map((t) => (
-                    <div key={t.label} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid rgba(195,198,207,0.2)' }}>
-                      <span style={{ color: '#43474e' }}>{t.label}</span>
-                      <span style={{ fontWeight: 700 }}>{t.value}</span>
+            {property.amenities && property.amenities.length > 0 && (
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002446' }}>Exclusive Amenities</h2>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+                  {property.amenities.map((a: string) => (
+                    <div key={a} className="flex items-center" style={{ gap: '12px' }}>
+                      <span className="material-symbols-outlined" style={{ color: '#72af90' }}>check_circle</span>
+                      <span style={{ color: '#191c1d' }}>{a}</span>
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {leaseTermsRight.map((t) => (
-                    <div key={t.label} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid rgba(195,198,207,0.2)' }}>
-                      <span style={{ color: '#43474e' }}>{t.label}</span>
-                      <span style={{ fontWeight: 700 }}>{t.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
+              </section>
+            )}
 
-            {/* Map */}
-            <section style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002446' }}>Location</h2>
-              <div style={{ height: '320px', width: '100%', borderRadius: '12px', overflow: 'hidden', position: 'relative' }}>
-                <img
-                  alt="Map of Aspen Colorado"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuATFbCXvHApbM_-uqJNCwItPt0JNeYei4anI0vR8HU7v_mZgUhGHG_hgaKg8xpApok86cbg8UTgCCNo6LTrIpMMv5HoKV4hEg9H4miNS46ivUE_ZTA9gAaJq1jpeyi7skk_4LCGG-DuriNaSLu6KU11Qq2oHxMhrxy4g3QT3bQhnHKuM8jhNQ2JsBvltuGgjTMWypBir4094h4YDVS9RTFIq90cKZ-E_JbR3TpcjTPAWU9L4Ab4Dq546orf_sa6yKv1fd3u-uPFfZbQ"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,36,70,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ backgroundColor: '#ffffff', padding: '16px', borderRadius: '12px', boxShadow: '0 20px 40px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '40px', height: '40px', backgroundColor: '#002446', color: '#ffffff', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span className="material-symbols-outlined">home</span>
-                    </div>
-                    <div>
-                      <p style={{ fontWeight: 700, fontSize: '14px' }}>Glass House Estate</p>
-                      <p style={{ fontSize: '12px', color: '#73777f' }}>Show on Google Maps</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+            {/* Location (Dynamic Map) */}
+            {property.latitude && property.longitude && (
+              <section style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}>
+                <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 700, color: '#002446' }}>Location</h2>
+                <PropertyLocationMap lat={property.latitude} lng={property.longitude} title={property.title} />
+              </section>
+            )}
           </div>
 
           {/* Right Column: Sticky Sidebar */}
@@ -234,19 +269,26 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '24px' }}>
                   <div>
                     <p style={{ color: '#73777f', fontSize: '14px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Monthly Rent</p>
-                    <h3 className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 900, color: '#002446' }}>
-                      $12,500<span style={{ fontSize: '18px', fontWeight: 500, color: '#73777f' }}>/mo</span>
-                    </h3>
+                    {isEditing ? (
+                      <div className="flex items-center mt-1">
+                        <span style={{ fontSize: '2rem', fontWeight: 900, color: '#002446', marginRight: '4px' }}>$</span>
+                        <input type="number" value={editData.monthlyRent} onChange={e => setEditData({...editData, monthlyRent: parseFloat(e.target.value)||0})} style={{ fontSize: '2rem', fontWeight: 900, color: '#002446', border: '1px solid #c3c6cf', borderRadius: '8px', padding: '4px', width: '120px' }} />
+                      </div>
+                    ) : (
+                      <h3 className="font-headline" style={{ fontSize: '2.5rem', fontWeight: 900, color: '#002446' }}>
+                        ${property.monthlyRent?.toLocaleString()}<span style={{ fontSize: '18px', fontWeight: 500, color: '#73777f' }}>/mo</span>
+                      </h3>
+                    )}
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#002a1a', backgroundColor: '#b1f0ce', padding: '4px 8px', borderRadius: '4px' }}>AVAILABLE NOW</p>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: '#002a1a', backgroundColor: '#b1f0ce', padding: '4px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>{property.status}</p>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
                   {[
                     { icon: "verified_user", text: "Verified Property & Owner" },
                     { icon: "event_available", text: "Guided Tour Available" },
-                    { icon: "history", text: "Listed 3 days ago" },
+                    { icon: "history", text: "Listed recently" },
                   ].map((item) => (
                     <div key={item.text} className="flex items-center" style={{ gap: '12px', fontSize: '14px', color: '#43474e' }}>
                       <span className="material-symbols-outlined" style={{ color: '#002446', fontSize: '20px' }}>{item.icon}</span>
@@ -254,14 +296,38 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                     </div>
                   ))}
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <button style={{ width: '100%', backgroundColor: '#002446', color: '#ffffff', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 16px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
-                    Apply to Rent
-                  </button>
-                  <button style={{ width: '100%', backgroundColor: '#fc9430', color: '#663500', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
-                    Schedule a Tour
-                  </button>
-                </div>
+                
+                {isOwner ? (
+                  isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <button onClick={handleSave} style={{ width: '100%', backgroundColor: '#002446', color: '#ffffff', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 16px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
+                        Save Changes
+                      </button>
+                      <button onClick={() => setIsEditing(false)} style={{ width: '100%', backgroundColor: '#f3f4f5', color: '#191c1d', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: '1px solid #c3c6cf', cursor: 'pointer', transition: 'all 0.2s' }}>
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <button onClick={() => setIsEditing(true)} style={{ width: '100%', backgroundColor: '#002446', color: '#ffffff', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 16px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
+                        Edit Property
+                      </button>
+                      <button onClick={handleDelete} style={{ width: '100%', backgroundColor: '#fff0f0', border: '1px solid #ffdad6', color: '#ba1a1a', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                        Delete Property
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <button style={{ width: '100%', backgroundColor: '#002446', color: '#ffffff', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: 'none', cursor: 'pointer', boxShadow: '0 8px 16px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
+                      Apply to Rent
+                    </button>
+                    <button style={{ width: '100%', backgroundColor: '#fc9430', color: '#663500', padding: '16px', borderRadius: '12px', fontWeight: 700, fontSize: '18px', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                      Schedule a Tour
+                    </button>
+                  </div>
+                )}
+                
                 <p style={{ textAlign: 'center', fontSize: '12px', color: '#73777f', marginTop: '24px' }}>
                   Application fee: $85 per applicant over 18.
                 </p>
@@ -269,17 +335,20 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
               {/* Host Profile */}
               <div className="flex items-center" style={{ backgroundColor: '#f3f4f5', padding: '24px', borderRadius: '16px', border: '1px solid rgba(195,198,207,0.3)', gap: '16px' }}>
-                <img
-                  alt="Property Manager"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHWX_T086UnT2TgLKl7aZ8sh_8RDkkokBUK0EOIoUR0F1PmCd4wXuXkhlJr8ufgJZYYbPJ4amhJjcldyLAGnoHDz_msurLbeMvX0CZdcgmHneHYXJlOq4teerUKv2EHyZKqaXlvtg34_CFJ6rYiQumpVqL-4tztjqrqBeXeJW2uUaTjcvmFBDvMfPsh97TVmR78xNrpYwvpo9iwoU72YHFkSzsT6jK41Q6KXr47yeU6iu9hFMs5LdVa5iBBEyuOLOb_xRWyV2AUNBp"
-                  style={{ width: '56px', height: '56px', borderRadius: '9999px', objectFit: 'cover' }}
-                />
+                {property.owner?.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt={property.owner.displayName} src={property.owner.photoUrl} style={{ width: '56px', height: '56px', borderRadius: '9999px', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '56px', height: '56px', borderRadius: '9999px', backgroundColor: '#c3c6cf', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span className="material-symbols-outlined" style={{ color: '#ffffff', fontSize: '32px' }}>person</span>
+                  </div>
+                )}
                 <div>
                   <p style={{ fontSize: '12px', color: '#73777f', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Property Manager</p>
-                  <p style={{ fontWeight: 700, color: '#191c1d' }}>Marcus Sterling</p>
+                  <p style={{ fontWeight: 700, color: '#191c1d' }}>{property.owner?.displayName || "Agent"}</p>
                   <div className="flex items-center" style={{ gap: '4px' }}>
                     <span className="material-symbols-outlined" style={{ color: '#fc9430', fontSize: '14px', fontVariationSettings: "'FILL' 1" }}>star</span>
-                    <span style={{ fontSize: '12px', fontWeight: 500 }}>4.9 (124 reviews)</span>
+                    <span style={{ fontSize: '12px', fontWeight: 500 }}>4.8 (New)</span>
                   </div>
                 </div>
               </div>

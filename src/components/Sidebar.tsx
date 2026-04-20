@@ -20,8 +20,7 @@ const ownerNavItems = [
 
 const seekerNavItems = [
   { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
-  { icon: "home_work", label: "Properties", href: "/listings" },
-  { icon: "description", label: "Leases", href: "/applications" },
+  { icon: "description", label: "Leases", href: "/leases" },
   { icon: "build", label: "Maintenance", href: "/maintenance" },
   { icon: "account_balance_wallet", label: "Finances", href: "/finances" },
 ];
