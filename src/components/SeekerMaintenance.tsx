@@ -27,7 +27,7 @@ export default function SeekerMaintenance() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  const activeLeases = leases.filter((l: AnyData) => l.status === "Active");
+  const activeLeases = leases.filter((l: AnyData) => l.status === "Active" || l.status === "Pending");
   const filtered = filter === "All" ? requests : requests.filter((r: AnyData) => r.status === filter);
 
   const handleSubmit = async () => {

@@ -43,11 +43,66 @@ export default function SeekerDashboard() {
   const openRequests = requests.filter((r: AnyData) => r.status !== "Completed" && r.status !== "Canceled");
   const upcomingPayment = payments.find((p: AnyData) => p.status === "Pending");
 
+  // Helper to dynamically calculate overdue penalty based on landlord settings
+  const calculateDynamicPenalty = (payment: AnyData) => {
+    if (!payment) return 0;
+    
+    let settings = {
+      penaltyEnabled: false,
+      gracePeriod: 0,
+      penaltyType: "Fixed",
+      penaltyValue: 0,
+      penaltyFrequency: "once"
+    };
+
+    if (payment.lease?.owner?.bio) {
+      try {
+        const parsed = JSON.parse(payment.lease.owner.bio);
+        if (typeof parsed === "object" && parsed !== null) {
+          settings = { ...settings, ...parsed };
+        }
+      } catch (e) {
+        // Ignored
+      }
+    }
+
+    if (!settings.penaltyEnabled || settings.penaltyValue <= 0) {
+      return 0;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dueDate = new Date(payment.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+    
+    // Check if it is actually overdue
+    const diffTime = today.getTime() - dueDate.getTime();
+    const overdueDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (overdueDays <= settings.gracePeriod) {
+      return 0; // Still inside grace period
+    }
+
+    const baseAmount = payment.amount || 0;
+    const rate = settings.penaltyType === "Percentage"
+      ? (settings.penaltyValue * baseAmount / 100)
+      : settings.penaltyValue;
+
+    const effectiveDays = overdueDays - settings.gracePeriod;
+    if (settings.penaltyFrequency === "daily") {
+      return rate * effectiveDays;
+    } else if (settings.penaltyFrequency === "3 days") {
+      return rate * Math.floor(effectiveDays / 3);
+    } else {
+      return rate; // "once"
+    }
+  };
+
   if (loading) {
     return (
       <main className="max-w-7xl mx-auto w-full" style={{ padding: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#1a3a5f', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+          <div style={{ width: '48px', height: '48px', border: '4px solid rgba(26, 58, 95, 0.1)', borderTop: '4px solid #1a3a5f', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
         </div>
       </main>
     );
@@ -99,7 +154,7 @@ export default function SeekerDashboard() {
                   <h3 className="text-xl md:text-2xl font-extrabold" style={{ color: '#002446', marginBottom: '8px' }}>{activeLease.property?.title || "Your Property"}</h3>
                   <p className="text-sm" style={{ color: '#43474e', marginBottom: '16px' }}>{activeLease.property?.address}, {activeLease.property?.city}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: '16px' }}>
-                    <div><span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Monthly Rent</span><p className="text-lg font-extrabold" style={{ color: '#002446' }}>${activeLease.monthlyRent?.toLocaleString()}</p></div>
+                    <div><span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Monthly Rent</span><p className="text-lg font-extrabold" style={{ color: '#002446' }}>ETB {activeLease.monthlyRent?.toLocaleString()}</p></div>
                     <div><span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Lease Ends</span><p className="text-lg font-extrabold" style={{ color: '#002446' }}>{activeLease.endDate ? new Date(activeLease.endDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}</p></div>
                     <div><span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Open Requests</span><p className="text-lg font-extrabold" style={{ color: openRequests.length > 0 ? '#ba1a1a' : '#002446' }}>{openRequests.length}</p></div>
                     <div><span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Landlord</span><p className="text-sm font-bold truncate" style={{ color: '#002446' }}>{activeLease.owner?.displayName || '—'}</p></div>
@@ -145,7 +200,7 @@ export default function SeekerDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold truncate">{app.property?.title || "Property"}</p>
-                      <p className="text-xs" style={{ color: '#64748b' }}>${app.property?.monthlyRent?.toLocaleString()}/mo</p>
+                      <p className="text-xs" style={{ color: '#64748b' }}>ETB {app.property?.monthlyRent?.toLocaleString()}/mo</p>
                     </div>
                     <span style={{
                       padding: '4px 10px', fontSize: '10px', fontWeight: 700, borderRadius: '4px', textTransform: 'uppercase',
@@ -161,25 +216,133 @@ export default function SeekerDashboard() {
 
         {/* Right Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Next Payment */}
-          <div style={{ background: 'linear-gradient(135deg, #002446 0%, #1a3a5f 100%)', borderRadius: '12px', padding: '24px', color: '#ffffff' }}>
-            <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#abc8f5' }}>Next Payment</span>
-            {upcomingPayment ? (
-              <>
-                <p className="text-3xl font-extrabold" style={{ marginTop: '8px' }}>${upcomingPayment.amount?.toLocaleString()}</p>
-                <p className="text-sm" style={{ color: '#87a4cf', marginTop: '4px' }}>
-                  Due {upcomingPayment.dueDate ? new Date(upcomingPayment.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'TBD'}
-                </p>
-                <button style={{ marginTop: '20px', width: '100%', padding: '12px', backgroundColor: '#ffffff', color: '#002446', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '14px' }}>
-                  Pay Now
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-2xl font-extrabold" style={{ marginTop: '8px' }}>No payment due</p>
-                <p className="text-sm" style={{ color: '#87a4cf', marginTop: '4px' }}>You&apos;re all caught up!</p>
-              </>
+          {/* Rent & Payments */}
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold font-headline" style={{ color: '#002446' }}>Rent & Payments</h3>
+              <Link href="/finances" style={{ fontSize: '12px', color: '#002446', fontWeight: 700, textDecoration: 'none' }}>View History</Link>
+            </div>
+
+            {upcomingPayment ? (() => {
+              // Calculate difference in days
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const dueDate = new Date(upcomingPayment.dueDate);
+              dueDate.setHours(0, 0, 0, 0);
+              const diffTime = dueDate.getTime() - today.getTime();
+              const daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+              const latePenalty = calculateDynamicPenalty(upcomingPayment);
+              const totalDue = upcomingPayment.amount + latePenalty;
+              const isOverdue = daysDiff < 0 || upcomingPayment.status === 'Overdue' || latePenalty > 0;
+              const isDueSoon = daysDiff >= 0 && daysDiff <= 5;
+
+              return (
+                <>
+                  {/* Reminder Alert Banner */}
+                  {isOverdue ? (
+                    <div style={{ backgroundColor: '#ffdad6', color: '#ba1a1a', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>warning</span>
+                      <span>Payment is OVERDUE by {Math.abs(daysDiff)} day{Math.abs(daysDiff) !== 1 ? 's' : ''}!</span>
+                    </div>
+                  ) : isDueSoon ? (
+                    <div style={{ backgroundColor: '#ffdcc3', color: '#914d00', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>notifications_active</span>
+                      <span>Payment is due in {daysDiff} day{daysDiff !== 1 ? 's' : ''}!</span>
+                    </div>
+                  ) : (
+                    <div style={{ backgroundColor: '#e8f5e9', color: '#2e7d32', padding: '12px 16px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 600 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>check_circle</span>
+                      <span>Next payment is on track.</span>
+                    </div>
+                  )}
+
+                  {/* Payment Breakdown Card */}
+                  <div style={{ background: 'linear-gradient(135deg, #002446 0%, #1a3a5f 100%)', borderRadius: '12px', padding: '20px', color: '#ffffff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px', marginBottom: '12px' }}>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#abc8f5' }}>Due Date</span>
+                        <p style={{ fontWeight: 700, fontSize: '14px', marginTop: '2px' }}>
+                          {upcomingPayment.dueDate ? new Date(upcomingPayment.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#abc8f5' }}>Late Penalty</span>
+                        <p style={{ fontWeight: 700, fontSize: '14px', marginTop: '2px', color: latePenalty > 0 ? '#ffb4ab' : '#ffffff' }}>
+                          ETB {latePenalty.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: '#abc8f5' }}>Total Due</span>
+                        <p className="text-3xl font-extrabold" style={{ marginTop: '2px' }}>ETB {totalDue.toLocaleString()}</p>
+                      </div>
+                      <button style={{ padding: '8px 20px', backgroundColor: '#ffffff', color: '#002446', fontWeight: 700, borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px' }}>
+                        Pay Now
+                      </button>
+                    </div>
+                  </div>
+                </>
+              );
+            })() : (
+              <div style={{ backgroundColor: '#f3f4f5', borderRadius: '12px', padding: '20px', textAlign: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '32px', color: '#9ca3af' }}>payments</span>
+                <p style={{ color: '#64748b', fontSize: '14px', marginTop: '8px', fontWeight: 600 }}>No upcoming payments</p>
+                <p style={{ color: '#9ca3af', fontSize: '12px', marginTop: '2px' }}>You&apos;re all caught up!</p>
+              </div>
             )}
+
+            {/* Payment Timeline */}
+            <div>
+              <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#002446', marginBottom: '12px' }}>Payment Timeline</h4>
+              {payments.length === 0 ? (
+                <p style={{ color: '#9ca3af', fontSize: '12px' }}>No payment records found.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderLeft: '2px solid #e2e8f0', paddingLeft: '16px', marginLeft: '8px' }}>
+                  {payments.slice(0, 3).map((p: AnyData) => {
+                    const isPaid = p.status === 'Paid';
+                    const lateFeeVal = isPaid ? (p.lateFee || 0) : calculateDynamicPenalty(p);
+                    const isOverdue = p.status === 'Overdue' || (!isPaid && lateFeeVal > 0);
+                    const dateText = isPaid
+                      ? `Paid on ${p.paidDate ? new Date(p.paidDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'}`
+                      : `Due ${p.dueDate ? new Date(p.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'}`;
+
+                    return (
+                      <div key={p.id} style={{ position: 'relative' }}>
+                        {/* Timeline Dot */}
+                        <div style={{
+                          position: 'absolute',
+                          left: '-23px',
+                          top: '4px',
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          backgroundColor: isPaid ? '#2e7d32' : isOverdue ? '#ba1a1a' : '#fc9430',
+                          border: '2px solid #ffffff',
+                          boxShadow: '0 0 0 2px #ffffff'
+                        }} />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: '16px' }}>
+                          <div>
+                            <p className="text-xs font-bold" style={{ color: '#191c1d' }}>{p.type || 'Rent Payment'}</p>
+                            <p className="text-[10px]" style={{ color: '#73777f', marginTop: '2px' }}>{dateText}</p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <p className="text-xs font-bold" style={{ color: isPaid ? '#2e7d32' : isOverdue ? '#ba1a1a' : '#191c1d' }}>
+                              ETB {(p.amount + lateFeeVal)?.toLocaleString()}
+                            </p>
+                            {lateFeeVal > 0 && (
+                              <p className="text-[9px] font-bold" style={{ color: '#ba1a1a' }}>+ ETB {lateFeeVal} fee</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Maintenance Requests */}
@@ -239,7 +402,7 @@ export default function SeekerDashboard() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold truncate">{s.property?.title}</p>
-                      <p className="text-[10px]" style={{ color: '#64748b' }}>${s.property?.monthlyRent?.toLocaleString()}/mo</p>
+                      <p className="text-[10px]" style={{ color: '#64748b' }}>ETB {s.property?.monthlyRent?.toLocaleString()}/mo</p>
                     </div>
                   </div>
                 ))}

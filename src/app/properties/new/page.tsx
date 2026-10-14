@@ -21,7 +21,7 @@ export default function AddPropertyPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [bedrooms, setBedrooms] = useState(2);
-  const [bathrooms, setBathrooms] = useState(1.5);
+  const [bathrooms, setBathrooms] = useState(1);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(['Laundry']);
   const [selectedUtilities, setSelectedUtilities] = useState<string[]>(['Electricity', 'Internet']);
   const [submitting, setSubmitting] = useState(false);
@@ -34,10 +34,14 @@ export default function AddPropertyPage() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
+  const [propertyCategory, setPropertyCategory] = useState<'Residential' | 'Commercial'>('Residential');
   const [propertyType, setPropertyType] = useState("Apartment");
   const [sqft, setSqft] = useState("");
   const [monthlyRent, setMonthlyRent] = useState("");
   const [description, setDescription] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [floor, setFloor] = useState("");
+  const [leaseType, setLeaseType] = useState("Gross Lease");
   const [yearBuilt, setYearBuilt] = useState("");
   const [latitude, setLatitude] = useState<number | undefined>(undefined);
   const [longitude, setLongitude] = useState<number | undefined>(undefined);
@@ -51,7 +55,8 @@ export default function AddPropertyPage() {
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
-  }, [authLoading, user, router]);
+    if (!authLoading && user && role && role !== "owner") router.push("/dashboard");
+  }, [authLoading, user, role, router]);
 
   // Handle Autocomplete
   useEffect(() => {
@@ -148,19 +153,27 @@ export default function AddPropertyPage() {
   };
 
   const handlePublish = async () => {
-    if (!user || !title || !address || !monthlyRent) return;
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
+    if (!user) return;
     setSubmitting(true);
     try {
       let photoUrls: string[] = [];
       if (photoFiles.length > 0) {
         photoUrls = await uploadPropertyPhotos(photoFiles, "new");
       }
+      
+      const finalAmenities = [...selectedAmenities];
+      if (propertyCategory === 'Commercial') {
+        if (floor.trim()) finalAmenities.push(`Floor: ${floor.trim()}`);
+        if (leaseType) finalAmenities.push(`Lease: ${leaseType}`);
+      }
+
       await createProperty({
         title, description, type: propertyType,
         monthlyRent: parseFloat(monthlyRent), bedrooms, bathrooms,
         squareFootage: parseInt(sqft) || 0,
         address, city, state, zipCode,
-        amenities: selectedAmenities, photos: photoUrls,
+        amenities: finalAmenities, photos: photoUrls,
         petFriendly: selectedAmenities.includes("Pet Friendly"),
         parkingSpaces: selectedAmenities.includes("Parking") ? 1 : 0,
         yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
@@ -171,14 +184,39 @@ export default function AddPropertyPage() {
     } catch (e) { console.error(e); setSubmitting(false); }
   };
 
-  const amenities = [
+  const residentialTypes = ['Apartment', 'House', 'Condo', 'Townhouse', 'Studio', 'Villa'];
+  const commercialTypes = ['Office Space', 'Retail/Shop', 'Warehouse', 'Restaurant', 'Hotel', 'Co-working Space'];
+  const propertyTypes = propertyCategory === 'Residential' ? residentialTypes : commercialTypes;
+
+  const isCommercial = propertyCategory === 'Commercial';
+
+  const residentialAmenities = [
     { icon: 'pets', label: 'Pet Friendly' },
     { icon: 'local_laundry_service', label: 'Laundry' },
     { icon: 'local_parking', label: 'Parking' },
     { icon: 'fitness_center', label: 'Gym' },
     { icon: 'pool', label: 'Pool' },
     { icon: 'ac_unit', label: 'AC' },
+    { icon: 'balcony', label: 'Balcony' },
+    { icon: 'yard', label: 'Garden' },
+    { icon: 'shield', label: 'Security' },
+    { icon: 'bolt', label: 'Generator' },
   ];
+
+  const commercialAmenities = [
+    { icon: 'elevator', label: 'Elevator' },
+    { icon: 'shield', label: '24/7 Security' },
+    { icon: 'bolt', label: 'Generator' },
+    { icon: 'wifi', label: 'High-Speed Internet' },
+    { icon: 'meeting_room', label: 'Conference Room' },
+    { icon: 'local_shipping', label: 'Loading Dock' },
+    { icon: 'videocam', label: 'CCTV' },
+    { icon: 'concierge', label: 'Reception Area' },
+    { icon: 'power', label: 'Backup Power' },
+    { icon: 'local_parking', label: 'Parking' },
+  ];
+
+  const amenities = isCommercial ? commercialAmenities : residentialAmenities;
 
   const utilities = [
     { icon: 'bolt', label: 'Electricity' },
@@ -197,6 +235,47 @@ export default function AddPropertyPage() {
     setSelectedUtilities(prev =>
       prev.includes(label) ? prev.filter(u => u !== label) : [...prev, label]
     );
+  };
+
+  // Category change handler
+  const handleCategoryChange = (category: 'Residential' | 'Commercial') => {
+    setPropertyCategory(category);
+    setPropertyType(category === 'Residential' ? 'Apartment' : 'Office Space');
+    setSelectedAmenities([]);
+    setFloor("");
+  };
+
+  // Per-step validation
+  const validateStep = (step: number): boolean => {
+    const errors: Record<string, string> = {};
+    if (step === 1) {
+      if (!title.trim()) errors.title = 'Property name is required';
+      if (!address.trim()) errors.address = 'Address is required';
+      if (!city.trim()) errors.city = 'City is required';
+      if (!state.trim()) errors.state = 'State/Region is required';
+      if (!sqft.trim()) errors.sqft = 'Square footage is required';
+      if (isCommercial && !floor.trim()) errors.floor = 'Floor number is required';
+      if (bedrooms < 1) errors.bedrooms = 'At least 1 required';
+      if (bathrooms < 1) errors.bathrooms = 'At least 1 required';
+    } else if (step === 2) {
+      if (photoFiles.length === 0) errors.photos = 'Upload at least 1 photo';
+    } else if (step === 3) {
+      if (!monthlyRent.trim()) errors.monthlyRent = 'Monthly rent is required';
+      if (!description.trim()) errors.description = 'Description is required';
+    }
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const renderError = (field: string) => {
+    if (!validationErrors[field]) return null;
+    return <span style={{ color: '#ba1a1a', fontSize: '12px', fontWeight: 500, marginTop: '4px' }}>{validationErrors[field]}</span>;
   };
 
   const currentRole = role || "owner";
@@ -276,10 +355,23 @@ export default function AddPropertyPage() {
               <section style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '32px', transition: 'all 0.3s' }}>
                 <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#002446', marginBottom: '32px', letterSpacing: '-0.025em' }}>Property Essentials</h2>
                 <form style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                  {/* Property Category */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Property Category</label>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      {(['Residential', 'Commercial'] as const).map((cat) => (
+                        <button key={cat} type="button" onClick={() => handleCategoryChange(cat)}
+                          style={{ flex: 1, padding: '14px', borderRadius: '8px', fontWeight: 700, fontSize: '14px', border: propertyCategory === cat ? '2px solid #002446' : '2px solid #e7e8e9', backgroundColor: propertyCategory === cat ? '#d3e3ff' : '#e7e8e9', color: propertyCategory === cat ? '#002446' : '#43474e', cursor: 'pointer', transition: 'all 0.2s' }}>
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {/* Property Name */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Property Name</label>
-                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Sunset Valley Residences" style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                    <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Sunset Valley Residences" style={{ width: '100%', backgroundColor: '#e7e8e9', border: validationErrors.title ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                    {renderError('title')}
                   </div>
                   {/* Address */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -302,11 +394,13 @@ export default function AddPropertyPage() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>City</label>
-                      <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="New York" style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                      <input type="text" value={city} onChange={e => setCity(e.target.value)} placeholder="Addis Ababa" style={{ width: '100%', backgroundColor: '#e7e8e9', border: validationErrors.city ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                      {renderError('city')}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>State</label>
-                      <input type="text" value={state} onChange={e => setState(e.target.value)} placeholder="NY" style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                      <input type="text" value={state} onChange={e => setState(e.target.value)} placeholder="Addis Ababa" style={{ width: '100%', backgroundColor: '#e7e8e9', border: validationErrors.state ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                      {renderError('state')}
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Zip Code</label>
@@ -314,36 +408,44 @@ export default function AddPropertyPage() {
                     </div>
                   </div>
                   {/* Type + Sqft */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isCommercial ? '1fr 1fr 1fr' : '1fr 1fr', gap: '16px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</label>
                       <select value={propertyType} onChange={e => setPropertyType(e.target.value)} style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px' }}>
-                        <option>Apartment</option><option>House</option><option>Condo</option><option>Townhouse</option><option>Studio</option>
+                        {propertyTypes.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
+                    {isCommercial && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Floor Number</label>
+                        <input type="text" value={floor} onChange={e => setFloor(e.target.value)} placeholder="e.g., 3rd Floor" style={{ width: '100%', backgroundColor: '#e7e8e9', border: validationErrors.floor ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                        {renderError('floor')}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sq Footage</label>
-                      <input type="number" value={sqft} onChange={e => setSqft(e.target.value)} placeholder="1,200" style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                      <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{isCommercial ? 'Floor Area (sqft)' : 'Sq Footage'}</label>
+                      <input type="number" value={sqft} onChange={e => setSqft(e.target.value)} placeholder="1,200" style={{ width: '100%', backgroundColor: '#e7e8e9', border: validationErrors.sqft ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} />
+                      {renderError('sqft')}
                     </div>
                   </div>
                   {/* Bed/Bath/Year */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', paddingTop: '16px' }}>
                     {/* Bedrooms */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#43474e', textTransform: 'uppercase' }}>Bedrooms</label>
+                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#43474e', textTransform: 'uppercase' }}>{isCommercial ? 'Rooms / Offices' : 'Bedrooms'}</label>
                       <div className="flex items-center" style={{ backgroundColor: '#f3f4f5', borderRadius: '8px', padding: '4px' }}>
-                        <button type="button" onClick={() => setBedrooms(Math.max(0, bedrooms - 1))} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>-</button>
+                        <button type="button" onClick={() => setBedrooms(Math.max(1, bedrooms - 1))} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>-</button>
                         <span style={{ flex: 1, textAlign: 'center', fontWeight: 700 }}>{bedrooms}</span>
                         <button type="button" onClick={() => setBedrooms(bedrooms + 1)} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>+</button>
                       </div>
                     </div>
-                    {/* Bathrooms */}
+                    {/* Bathrooms / Restrooms */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#43474e', textTransform: 'uppercase' }}>Bathrooms</label>
+                      <label style={{ fontSize: '10px', fontWeight: 700, color: '#43474e', textTransform: 'uppercase' }}>{isCommercial ? 'Restrooms' : 'Bathrooms'}</label>
                       <div className="flex items-center" style={{ backgroundColor: '#f3f4f5', borderRadius: '8px', padding: '4px' }}>
-                        <button type="button" onClick={() => setBathrooms(Math.max(0, bathrooms - 0.5))} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>-</button>
+                        <button type="button" onClick={() => setBathrooms(Math.max(1, bathrooms - 1))} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>-</button>
                         <span style={{ flex: 1, textAlign: 'center', fontWeight: 700 }}>{bathrooms}</span>
-                        <button type="button" onClick={() => setBathrooms(bathrooms + 0.5)} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>+</button>
+                        <button type="button" onClick={() => setBathrooms(bathrooms + 1)} style={{ width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '18px' }}>+</button>
                       </div>
                     </div>
                     {/* Year Built */}
@@ -355,7 +457,8 @@ export default function AddPropertyPage() {
                   {/* Description */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <label style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</label>
-                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe your property — highlights, features, neighborhood..." rows={4} style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', resize: 'none', boxSizing: 'border-box' }} />
+                    <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe your property — highlights, features, neighborhood..." rows={4} style={{ width: '100%', backgroundColor: '#e7e8e9', border: validationErrors.description ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', resize: 'none', boxSizing: 'border-box' }} />
+                    {renderError('description')}
                   </div>
                 </form>
               </section>
@@ -365,7 +468,7 @@ export default function AddPropertyPage() {
             {currentStep === 2 && (
               <section style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '32px' }}>
                 <h2 className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#002446', marginBottom: '8px', letterSpacing: '-0.025em' }}>Media &amp; Photos</h2>
-                <p style={{ color: '#43474e', lineHeight: '1.6', marginBottom: '32px' }}>High-quality visual content increases property engagement by up to 80%.</p>
+                <p style={{ color: '#43474e', lineHeight: '1.6', marginBottom: '32px' }}>High-quality visual content increases property engagement by up to 80%.{validationErrors.photos && <span style={{ display: 'block', color: '#ba1a1a', fontSize: '13px', fontWeight: 500, marginTop: '8px' }}>{validationErrors.photos}</span>}</p>
 
                 {/* Dropzone */}
                 <div style={{ border: '2px dashed #c3c6cf', borderRadius: '12px', padding: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fafbfc', transition: 'all 0.3s', marginBottom: '32px' }}>
@@ -454,18 +557,28 @@ export default function AddPropertyPage() {
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>Monthly Rent</label>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#43474e' }}>$</span>
-                        <input type="number" value={monthlyRent} onChange={e => setMonthlyRent(e.target.value)} placeholder="3400" style={{ width: '100%', padding: '12px 16px 12px 32px', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', outline: 'none', fontWeight: 600, boxSizing: 'border-box' }} />
+                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#43474e', fontSize: '13px' }}>ETB</span>
+                        <input type="number" value={monthlyRent} onChange={e => setMonthlyRent(e.target.value)} placeholder="50000" style={{ width: '100%', padding: '12px 16px 12px 48px', backgroundColor: '#e7e8e9', border: validationErrors.monthlyRent ? '2px solid #ba1a1a' : 'none', borderRadius: '8px', outline: 'none', fontWeight: 600, boxSizing: 'border-box' }} />
+                        {renderError('monthlyRent')}
                       </div>
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>Security Deposit</label>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#43474e' }}>$</span>
-                        <input type="number" defaultValue={3400} style={{ width: '100%', padding: '12px 16px 12px 32px', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', outline: 'none', fontWeight: 600, boxSizing: 'border-box' }} />
+                        <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: '#43474e', fontSize: '13px' }}>ETB</span>
+                        <input type="number" defaultValue={50000} style={{ width: '100%', padding: '12px 16px 12px 48px', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', outline: 'none', fontWeight: 600, boxSizing: 'border-box' }} />
                       </div>
                     </div>
                   </div>
+
+                  {isCommercial && (
+                    <div style={{ marginTop: '24px' }}>
+                      <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>Lease Type</label>
+                      <select value={leaseType} onChange={e => setLeaseType(e.target.value)} style={{ width: '100%', backgroundColor: '#e7e8e9', border: 'none', borderRadius: '8px', padding: '16px', outline: 'none', fontSize: '14px', fontWeight: 600 }}>
+                        {['Gross Lease', 'Net Lease', 'Double Net (NN)', 'Triple Net (NNN)', 'Modified Gross'].map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Utilities Included */}
                   <div style={{ marginTop: '32px' }}>
@@ -527,18 +640,18 @@ export default function AddPropertyPage() {
                         </p>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <span className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#002446' }}>${monthlyRent ? parseFloat(monthlyRent).toLocaleString() : '0'}</span>
+                        <span className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#002446' }}>ETB {monthlyRent ? parseFloat(monthlyRent).toLocaleString() : '0'}</span>
                         <span style={{ color: '#43474e', fontSize: '14px', fontWeight: 500 }}>/mo</span>
                       </div>
                     </div>
                     <div className="flex flex-wrap" style={{ gap: '24px', padding: '16px 0', borderTop: '1px solid rgba(195,198,207,0.2)', borderBottom: '1px solid rgba(195,198,207,0.2)' }}>
                       <div className="flex items-center" style={{ gap: '8px' }}>
-                        <span className="material-symbols-outlined" style={{ color: '#002446' }}>bed</span>
-                        <span style={{ fontWeight: 600 }}>{bedrooms} Bed</span>
+                        <span className="material-symbols-outlined" style={{ color: '#002446' }}>{isCommercial ? 'meeting_room' : 'bed'}</span>
+                        <span style={{ fontWeight: 600 }}>{bedrooms} {isCommercial ? 'Rooms' : 'Bed'}</span>
                       </div>
                       <div className="flex items-center" style={{ gap: '8px' }}>
-                        <span className="material-symbols-outlined" style={{ color: '#002446' }}>bathtub</span>
-                        <span style={{ fontWeight: 600 }}>{bathrooms} Bath</span>
+                        <span className="material-symbols-outlined" style={{ color: '#002446' }}>{isCommercial ? 'bathroom' : 'bathtub'}</span>
+                        <span style={{ fontWeight: 600 }}>{bathrooms} {isCommercial ? 'Restrooms' : 'Bath'}</span>
                       </div>
                       <div className="flex items-center" style={{ gap: '8px' }}>
                         <span className="material-symbols-outlined" style={{ color: '#002446' }}>square_foot</span>
@@ -559,6 +672,10 @@ export default function AddPropertyPage() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {[
                         { label: 'Type', value: propertyType },
+                        ...(isCommercial ? [
+                          { label: 'Floor', value: floor || 'N/A' },
+                          { label: 'Lease Type', value: leaseType || 'N/A' },
+                        ] : []),
                         { label: 'Year Built', value: yearBuilt || 'N/A' },
                         { label: 'Photos', value: `${photoFiles.length} uploaded` },
                       ].map((item) => (
@@ -602,12 +719,12 @@ export default function AddPropertyPage() {
                 <div />
               )}
               {currentStep < 4 ? (
-                <button onClick={() => setCurrentStep(currentStep + 1)} className="flex items-center font-headline" style={{ gap: '8px', padding: '12px 48px', backgroundColor: '#002446', color: '#ffffff', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
+                <button onClick={handleNextStep} className="flex items-center font-headline" style={{ gap: '8px', padding: '12px 48px', backgroundColor: '#002446', color: '#ffffff', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
                   Next Step
                   <span className="material-symbols-outlined">arrow_forward</span>
                 </button>
               ) : (
-                <button onClick={handlePublish} disabled={submitting || !title || !monthlyRent} className="flex items-center font-headline" style={{ gap: '8px', padding: '12px 32px', backgroundColor: submitting ? '#64748b' : '#002446', color: '#ffffff', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
+                <button onClick={handlePublish} disabled={submitting} className="flex items-center font-headline" style={{ gap: '8px', padding: '12px 32px', backgroundColor: submitting ? '#64748b' : '#002446', color: '#ffffff', borderRadius: '8px', fontWeight: 700, border: 'none', cursor: submitting ? 'not-allowed' : 'pointer', boxShadow: '0 4px 12px rgba(0,36,70,0.2)', transition: 'all 0.2s' }}>
                   {submitting ? 'Publishing...' : 'Publish Listing'}
                   {!submitting && <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'FILL' 1" }}>rocket_launch</span>}
                   {submitting && <span className="material-symbols-outlined" style={{ fontSize: '18px', animation: 'spin 1s linear infinite' }}>progress_activity</span>}

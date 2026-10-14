@@ -70,9 +70,9 @@ export default function LoginPage() {
             <span className="font-headline" style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.05em', color: '#191c1d' }}>Homie</span>
           </Link>
           <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
-            <Link href="#" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>Features</Link>
-            <Link href="#" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>Pricing</Link>
-            <Link href="#" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>About</Link>
+            <Link href="/listings" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>Properties</Link>
+            <Link href="/map-search" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>Map Search</Link>
+            <Link href="/signup" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none', fontWeight: 500 }}>Sign Up</Link>
             <Link href="/signup" style={{
               backgroundColor: '#002446', color: '#ffffff', padding: '8px 20px',
               borderRadius: '8px', fontWeight: 600, fontSize: '14px', textDecoration: 'none',
@@ -121,7 +121,7 @@ export default function LoginPage() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingLeft: '4px', paddingRight: '4px', marginBottom: '8px' }}>
                   <label style={{ fontSize: '14px', fontWeight: 600, color: '#43474e' }}>Password</label>
-                  <Link href="#" style={{ fontSize: '12px', fontWeight: 600, color: '#002446', textDecoration: 'none' }}>Forgot Password?</Link>
+                  <Link href="/signup" style={{ fontSize: '12px', fontWeight: 600, color: '#002446', textDecoration: 'none' }}>Forgot Password?</Link>
                 </div>
                 <div style={{ position: 'relative' }}>
                   <input
@@ -192,9 +192,9 @@ export default function LoginPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 32px', maxWidth: '80rem', margin: '0 auto' }}>
           <p style={{ color: '#475569', fontSize: '14px' }}>© 2024 Homie Architectural Management. All rights reserved.</p>
           <div style={{ display: 'flex', gap: '24px' }}>
-            <Link href="#" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none' }}>Privacy Policy</Link>
-            <Link href="#" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none' }}>Terms of Service</Link>
-            <Link href="#" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none' }}>Help Center</Link>
+            <Link href="/listings" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none' }}>Properties</Link>
+            <Link href="/signup" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none' }}>Sign Up</Link>
+            <Link href="/map-search" style={{ color: '#64748b', fontSize: '14px', textDecoration: 'none' }}>Map Search</Link>
           </div>
         </div>
       </footer>

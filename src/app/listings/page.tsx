@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 import { listAvailableProperties, searchProperties } from "@/lib/dataService";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyData = any;
 
-const propertyTypes = ["Apartment", "House", "Condo", "Townhouse", "Studio"];
-const amenitiesList = ["Parking", "Pool", "Gym", "Pet Friendly", "Laundry", "AC"];
+const propertyTypes = ["Apartment", "House", "Condo", "Townhouse", "Studio", "Villa", "Office Space", "Retail/Shop", "Warehouse", "Restaurant", "Hotel", "Co-working Space"];
+const amenitiesList = ["Parking", "Pool", "Gym", "Pet Friendly", "Laundry", "AC", "Elevator", "24/7 Security", "Conference Room", "CCTV"];
 const bedroomOpts = ["Any", "1+", "2+", "3+"];
 
 export default function ListingsPage() {
+  const { user, loading: authLoading, logout } = useAuth();
   const [activeNav, setActiveNav] = useState("Discover");
   const [viewMode, setViewMode] = useState("Grid");
   const [activeBed, setActiveBed] = useState("Any");
@@ -143,7 +145,19 @@ export default function ListingsPage() {
               style={{ paddingLeft: '40px', paddingRight: '16px', padding: '8px 16px 8px 40px', borderRadius: '8px', border: 'none', backgroundColor: '#f1f5f9', fontSize: '14px', width: '220px', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
-          <Link href="/dashboard" style={{ backgroundColor: '#002446', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}>Dashboard</Link>
+          {authLoading ? (
+            <div style={{ width: '80px', height: '32px', borderRadius: '8px', backgroundColor: '#e7e8e9', animation: 'pulse 1.5s infinite' }} />
+          ) : user ? (
+            <div className="flex items-center" style={{ gap: '12px' }}>
+              <Link href="/dashboard" style={{ backgroundColor: '#002446', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}>Dashboard</Link>
+              <button onClick={logout} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Log Out</button>
+            </div>
+          ) : (
+            <div className="flex items-center" style={{ gap: '12px' }}>
+              <Link href="/login" style={{ color: '#002446', fontWeight: 600, fontSize: '13.5px', textDecoration: 'none' }}>Log In</Link>
+              <Link href="/signup" style={{ backgroundColor: '#002446', color: '#fff', padding: '8px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}>Sign Up</Link>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -342,24 +356,29 @@ export default function ListingsPage() {
                     <div className="flex flex-wrap" style={{ justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '8px' }}>
                       <h3 className="font-headline truncate" style={{ fontSize: '1.125rem', fontWeight: 700, color: '#002446', maxWidth: '60%' }}>{prop.title}</h3>
                       <p className="font-headline" style={{ fontSize: '1.125rem', fontWeight: 800, color: '#002446', whiteSpace: 'nowrap' }}>
-                        ${prop.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af' }}>/mo</span>
+                        ETB {prop.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af' }}>/mo</span>
                       </p>
                     </div>
                     <p className="flex items-center truncate" style={{ fontSize: '13px', color: '#43474e', gap: '4px', marginBottom: '16px' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>location_on</span>
                       {prop.address || `${prop.city}, ${prop.state}`}
                     </p>
-                    <div className="flex flex-wrap" style={{ justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #f3f4f5', color: '#43474e', fontSize: '12px', fontWeight: 600, gap: '8px' }}>
-                      <div className="flex items-center" style={{ gap: '4px' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bed</span> {prop.bedrooms} {prop.bedrooms === 1 ? 'Bed' : 'Beds'}
-                      </div>
-                      <div className="flex items-center" style={{ gap: '4px' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>bathtub</span> {prop.bathrooms} {prop.bathrooms === 1 ? 'Bath' : 'Baths'}
-                      </div>
-                      <div className="flex items-center" style={{ gap: '4px' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>square_foot</span> {prop.squareFootage?.toLocaleString()} sqft
-                      </div>
-                    </div>
+                    {(() => {
+                      const isPropCommercial = ['Office Space', 'Retail/Shop', 'Warehouse', 'Restaurant', 'Hotel', 'Co-working Space'].includes(prop.type);
+                      return (
+                        <div className="flex flex-wrap" style={{ justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #f3f4f5', color: '#43474e', fontSize: '12px', fontWeight: 600, gap: '8px' }}>
+                          <div className="flex items-center" style={{ gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{isPropCommercial ? 'meeting_room' : 'bed'}</span> {prop.bedrooms} {isPropCommercial ? (prop.bedrooms === 1 ? 'Room' : 'Rooms') : (prop.bedrooms === 1 ? 'Bed' : 'Beds')}
+                          </div>
+                          <div className="flex items-center" style={{ gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>{isPropCommercial ? 'bathroom' : 'bathtub'}</span> {prop.bathrooms} {isPropCommercial ? (prop.bathrooms === 1 ? 'Restroom' : 'Restrooms') : (prop.bathrooms === 1 ? 'Bath' : 'Baths')}
+                          </div>
+                          <div className="flex items-center" style={{ gap: '4px' }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>square_foot</span> {prop.squareFootage?.toLocaleString()} sqft
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </article>
               </Link>

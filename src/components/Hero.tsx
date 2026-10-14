@@ -53,9 +53,9 @@ export default function Hero() {
                 Price Range
               </label>
               <select className="bg-transparent border-none p-0 focus:ring-0 focus:outline-none text-on-surface font-semibold text-lg cursor-pointer appearance-none">
-                <option>$2,000 - $4,000</option>
-                <option>$4,000 - $8,000</option>
-                <option>$8,000+</option>
+                <option>ETB 5,000 - ETB 15,000</option>
+                <option>ETB 15,000 - ETB 30,000</option>
+                <option>ETB 30,000+</option>
               </select>
             </div>
           </div>

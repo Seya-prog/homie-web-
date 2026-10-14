@@ -69,7 +69,7 @@ export default function LeasesPage() {
             {[
               { label: "Active", value: leases.filter((l: AnyData) => l.status === "Active").length, color: '#002a1a', bg: 'rgba(177,240,206,0.3)' },
               { label: "Pending", value: leases.filter((l: AnyData) => l.status === "Pending").length, color: '#002446', bg: '#d3e3ff' },
-              { label: "Monthly Income", value: `$${leases.filter((l: AnyData) => l.status === "Active").reduce((s: number, l: AnyData) => s + (l.monthlyRent || 0), 0).toLocaleString()}`, color: '#002446', bg: '#ffffff' },
+              { label: "Monthly Income", value: `ETB ${leases.filter((l: AnyData) => l.status === "Active").reduce((s: number, l: AnyData) => s + (l.monthlyRent || 0), 0).toLocaleString()}`, color: '#002446', bg: '#ffffff' },
               { label: "Ended", value: leases.filter((l: AnyData) => l.status === "Ended").length, color: '#64748b', bg: '#e7e8e9' },
             ].map((stat, i) => (
               <div key={i} style={{ backgroundColor: stat.bg, borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
@@ -131,7 +131,7 @@ export default function LeasesPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-4" style={{ gap: '16px', paddingTop: '12px', borderTop: '1px solid #f1f5f9' }}>
                       <div>
                         <span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Monthly Rent</span>
-                        <p className="text-lg font-extrabold" style={{ color: '#002446' }}>${lease.monthlyRent?.toLocaleString()}</p>
+                        <p className="text-lg font-extrabold" style={{ color: '#002446' }}>ETB {lease.monthlyRent?.toLocaleString()}</p>
                       </div>
                       <div>
                         <span className="text-[10px] uppercase font-bold" style={{ color: '#9ca3af' }}>Start Date</span>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { listAvailableProperties } from "@/lib/dataService";
 import useGoogleMaps from "@/hooks/useGoogleMaps";
+import { useAuth } from "@/context/AuthContext";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyData = any;
@@ -64,8 +65,8 @@ function GoogleMap({
 
       const isSelected = selectedId === p.id;
       const rent = p.monthlyRent >= 1000
-        ? `$${(p.monthlyRent / 1000).toFixed(1)}k`
-        : `$${p.monthlyRent}`;
+        ? `ETB ${(p.monthlyRent / 1000).toFixed(1)}k`
+        : `ETB ${p.monthlyRent}`;
 
       // Custom HTML pin
       const pinEl = document.createElement("div");
@@ -125,6 +126,7 @@ function GoogleMap({
 }
 
 export default function MapSearchPage() {
+  const { user, role, loading: authLoading, logout } = useAuth();
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [properties, setProperties] = useState<AnyData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,12 +171,32 @@ export default function MapSearchPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link href="/signup" style={{
-            backgroundColor: '#002446', color: '#ffffff', padding: '8px 20px',
-            borderRadius: '8px', fontWeight: 700, fontSize: '14px', textDecoration: 'none',
-          }}>
-            List Property
-          </Link>
+          {authLoading ? (
+            <div style={{ width: '80px', height: '32px', borderRadius: '8px', backgroundColor: '#e7e8e9', animation: 'pulse 1.5s infinite' }} />
+          ) : user ? (
+            <div className="flex items-center" style={{ gap: '12px' }}>
+              <Link href="/dashboard" style={{ color: '#002446', fontWeight: 600, fontSize: '14px', textDecoration: 'none' }}>Dashboard</Link>
+              {role === 'owner' && (
+                <Link href="/properties/new" style={{
+                  backgroundColor: '#002446', color: '#ffffff', padding: '8px 20px',
+                  borderRadius: '8px', fontWeight: 700, fontSize: '14px', textDecoration: 'none',
+                }}>
+                  List Property
+                </Link>
+              )}
+              <button onClick={logout} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>Log Out</button>
+            </div>
+          ) : (
+            <div className="flex items-center" style={{ gap: '12px' }}>
+              <Link href="/login" style={{ color: '#002446', fontWeight: 600, fontSize: '14px', textDecoration: 'none' }}>Log In</Link>
+              <Link href="/signup" style={{
+                backgroundColor: '#002446', color: '#ffffff', padding: '8px 20px',
+                borderRadius: '8px', fontWeight: 700, fontSize: '14px', textDecoration: 'none',
+              }}>
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -407,7 +429,7 @@ function PropertyCard({ p, selected, onClick }: { p: AnyData; selected: boolean;
         </div>
         <div style={{ padding: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-            <h3 className="font-headline" style={{ fontSize: '1.125rem', fontWeight: 700, color: '#002446' }}>${p.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af' }}>/mo</span></h3>
+            <h3 className="font-headline" style={{ fontSize: '1.125rem', fontWeight: 700, color: '#002446' }}>ETB {p.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 400, color: '#9ca3af' }}>/mo</span></h3>
           </div>
           <p className="truncate" style={{ fontSize: '13px', color: '#475569', fontWeight: 500, marginBottom: '12px' }}>{p.title || p.address}</p>
           <div style={{ display: 'flex', gap: '12px', color: '#64748b', fontSize: '13px', borderTop: '1px solid #f8fafc', paddingTop: '10px' }}>

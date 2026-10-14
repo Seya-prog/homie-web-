@@ -20,6 +20,7 @@ export interface UserProfile {
   role: UserRole;
   photoUrl?: string | null;
   phoneNumber?: string | null;
+  bio?: string | null;
   createdAt: string;
 }
 
@@ -51,6 +52,7 @@ async function getUserFromDB(uid: string): Promise<UserProfile | null> {
       role: data.role as UserRole,
       photoUrl: data.photoUrl,
       phoneNumber: data.phoneNumber,
+      bio: data.bio,
       createdAt: data.createdAt,
     };
   } catch {

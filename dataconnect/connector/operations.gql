@@ -218,6 +218,16 @@ query ListOwnerApplications @auth(level: USER) {
   }
 }
 
+query GetApplication($id: UUID!) @auth(level: USER) {
+  propertyApplication(id: $id) {
+    id, status, message, moveInDate, employmentStatus, monthlyIncome, createdAt,
+    property { id, title, address, city, photos, monthlyRent, bedrooms, bathrooms, squareFootage, type },
+    applicant { id, displayName, email, phoneNumber, photoUrl },
+    owner { id, displayName, email }
+  }
+}
+
+
 # ============================================================
 # LEASE OPERATIONS
 # ============================================================
@@ -329,7 +339,7 @@ mutation MarkPaymentPaid($id: UUID!, $paidDate: Date!, $transactionId: String, $
 query ListTenantPayments @auth(level: USER) {
   payments(where: { payer: { id: { eq_expr: "auth.uid" } } }, orderBy: [{ dueDate: DESC }]) {
     id, amount, dueDate, paidDate, status, type, paymentMethod, transactionId, lateFee, createdAt,
-    lease { id, property { id, title, address } }
+    lease { id, owner { id, displayName, bio }, property { id, title, address } }
   }
 }
 

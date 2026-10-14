@@ -48,11 +48,11 @@ export default function SeekerFinances() {
       <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: '16px' }}>
         <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <span className="text-xs uppercase font-bold tracking-wider" style={{ color: '#9ca3af' }}>Total Paid</span>
-          <p className="text-2xl font-extrabold mt-2" style={{ color: '#002a1a' }}>${totalPaid.toLocaleString()}</p>
+          <p className="text-2xl font-extrabold mt-2" style={{ color: '#002a1a' }}>ETB {totalPaid.toLocaleString()}</p>
         </div>
         <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <span className="text-xs uppercase font-bold tracking-wider" style={{ color: '#9ca3af' }}>Monthly Rent</span>
-          <p className="text-2xl font-extrabold mt-2" style={{ color: '#002446' }}>${activeLease?.monthlyRent?.toLocaleString() || '0'}</p>
+          <p className="text-2xl font-extrabold mt-2" style={{ color: '#002446' }}>ETB {activeLease?.monthlyRent?.toLocaleString() || '0'}</p>
         </div>
         <div style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
           <span className="text-xs uppercase font-bold tracking-wider" style={{ color: '#9ca3af' }}>Pending</span>
@@ -69,7 +69,7 @@ export default function SeekerFinances() {
         <div style={{ background: 'linear-gradient(135deg, #002446, #1a3a5f)', borderRadius: '12px', padding: '24px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
           <div>
             <p className="text-sm font-bold" style={{ color: '#abc8f5' }}>Next Payment Due</p>
-            <p className="text-3xl font-extrabold" style={{ color: '#ffffff', marginTop: '4px' }}>${nextPayment.amount?.toLocaleString()}</p>
+            <p className="text-3xl font-extrabold" style={{ color: '#ffffff', marginTop: '4px' }}>ETB {nextPayment.amount?.toLocaleString()}</p>
             <p className="text-sm" style={{ color: '#87a4cf', marginTop: '4px' }}>
               {nextPayment.dueDate ? new Date(nextPayment.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'TBD'}
             </p>
@@ -121,7 +121,7 @@ export default function SeekerFinances() {
                     <td className="px-6 py-4 text-sm" style={{ color: '#64748b' }}>
                       {p.dueDate ? new Date(p.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                     </td>
-                    <td className="px-6 py-4 text-right text-sm font-extrabold" style={{ color: '#002446' }}>${p.amount?.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right text-sm font-extrabold" style={{ color: '#002446' }}>ETB {p.amount?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-right">
                       <span style={{ padding: '4px 10px', fontSize: '10px', fontWeight: 700, borderRadius: '4px', textTransform: 'uppercase', backgroundColor: ss.bg, color: ss.color }}>{p.status}</span>
                     </td>

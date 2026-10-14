@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 type Role = "owner" | "seeker";
 
@@ -27,6 +28,7 @@ const seekerNavItems = [
 
 export default function Sidebar({ role, activePage = "Dashboard" }: SidebarProps) {
   const [active, setActive] = useState(activePage);
+  const { logout } = useAuth();
   const navItems = role === "owner" ? ownerNavItems : seekerNavItems;
 
   return (
@@ -115,7 +117,7 @@ export default function Sidebar({ role, activePage = "Dashboard" }: SidebarProps
           </Link>
         )}
         <Link
-          href="#"
+          href="/listings"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -130,8 +132,8 @@ export default function Sidebar({ role, activePage = "Dashboard" }: SidebarProps
           <span className="material-symbols-outlined">help</span>
           <span className="font-headline" style={{ fontSize: '14px', fontWeight: 600 }}>Support</span>
         </Link>
-        <Link
-          href="/"
+        <button
+          onClick={logout}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -139,13 +141,17 @@ export default function Sidebar({ role, activePage = "Dashboard" }: SidebarProps
             padding: '12px 16px',
             borderRadius: '8px',
             color: '#64748b',
-            textDecoration: 'none',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'left',
             transition: 'all 0.2s',
           }}
         >
           <span className="material-symbols-outlined">logout</span>
           <span className="font-headline" style={{ fontSize: '14px', fontWeight: 600 }}>Sign Out</span>
-        </Link>
+        </button>
       </div>
     </aside>
   );

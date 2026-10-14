@@ -20,7 +20,8 @@ export default function PropertiesPage() {
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
-  }, [authLoading, user, router]);
+    if (!authLoading && user && role && role !== "owner") router.push("/dashboard");
+  }, [authLoading, user, role, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -116,7 +117,7 @@ export default function PropertiesPage() {
                         <h3 className="text-lg font-bold truncate" style={{ color: '#002446' }}>{prop.title}</h3>
                         <p className="text-sm truncate" style={{ color: '#64748b', marginTop: '2px' }}>{prop.address}, {prop.city}, {prop.state}</p>
                         <div className="flex items-center flex-wrap" style={{ gap: '16px', marginTop: '16px' }}>
-                          <span className="text-xl font-extrabold" style={{ color: '#002446' }}>${prop.monthlyRent?.toLocaleString()}<span className="text-xs font-normal" style={{ color: '#9ca3af' }}>/mo</span></span>
+                          <span className="text-xl font-extrabold" style={{ color: '#002446' }}>ETB {prop.monthlyRent?.toLocaleString()}<span className="text-xs font-normal" style={{ color: '#9ca3af' }}>/mo</span></span>
                         </div>
                         <div className="flex flex-wrap" style={{ gap: '8px', marginTop: '12px' }}>
                           <span className="text-xs font-bold px-3 py-1" style={{ backgroundColor: '#f3f4f5', borderRadius: '6px', color: '#43474e' }}>{prop.bedrooms} bed</span>

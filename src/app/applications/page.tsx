@@ -33,7 +33,7 @@ export default function ApplicationsPage() {
   if (authLoading) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8f9fa' }}>
-        <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#1a3a5f', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+        <div style={{ width: '48px', height: '48px', border: '4px solid rgba(26, 58, 95, 0.1)', borderTop: '4px solid #1a3a5f', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
       </div>
     );
   }
@@ -101,8 +101,8 @@ export default function ApplicationsPage() {
 
           {/* Applications List */}
           {loading ? (
-            <div style={{ padding: '64px', textAlign: 'center' }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '48px', color: '#1a3a5f', animation: 'spin 1s linear infinite' }}>progress_activity</span>
+            <div style={{ padding: '64px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ width: '48px', height: '48px', border: '4px solid rgba(26, 58, 95, 0.1)', borderTop: '4px solid #1a3a5f', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
             </div>
           ) : filtered.length === 0 ? (
             <div style={{ padding: '64px 24px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '12px' }}>
@@ -128,7 +128,7 @@ export default function ApplicationsPage() {
                   {filtered.map((app: AnyData) => {
                     const ss = statusStyle(app.status);
                     return (
-                      <tr key={app.id} className="hover:bg-[#f9fafb] transition-colors" style={{ borderBottom: '1px solid #f8fafc' }}>
+                      <tr key={app.id} className="hover:bg-[#f9fafb] transition-colors" style={{ borderBottom: '1px solid #f8fafc', cursor: 'pointer' }} onClick={() => router.push(`/applications/${app.id}`)}>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div style={{ width: '36px', height: '36px', borderRadius: '9999px', backgroundColor: '#e7e8e9', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -141,7 +141,7 @@ export default function ApplicationsPage() {
                             </div>
                             <div>
                               <p className="text-sm font-bold" style={{ color: '#002446' }}>{currentRole === "owner" ? (app.applicant?.displayName || "Applicant") : (app.property?.title || "Property")}</p>
-                              <p className="text-xs" style={{ color: '#64748b' }}>{currentRole === "owner" ? app.applicant?.email : `$${app.property?.monthlyRent?.toLocaleString()}/mo`}</p>
+                              <p className="text-xs" style={{ color: '#64748b' }}>{currentRole === "owner" ? app.applicant?.email : `ETB ${app.property?.monthlyRent?.toLocaleString()}/mo`}</p>
                             </div>
                           </div>
                         </td>
@@ -156,11 +156,11 @@ export default function ApplicationsPage() {
                           <span style={{ padding: '4px 12px', fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', borderRadius: '9999px', backgroundColor: ss.bg, color: ss.color }}>{app.status}</span>
                         </td>
                         {currentRole === "owner" && (
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
                             {app.status === "Pending" && (
                               <div className="flex gap-2 justify-end">
-                                <button onClick={() => handleStatusChange(app.id, "Approved")} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: '#002a1a', color: '#ffffff' }}>Approve</button>
-                                <button onClick={() => handleStatusChange(app.id, "Rejected")} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, borderRadius: '6px', border: '1px solid #c3c6cf', cursor: 'pointer', backgroundColor: 'transparent', color: '#64748b' }}>Reject</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, "Approved"); }} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: '#002a1a', color: '#ffffff' }}>Approve</button>
+                                <button onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, "Rejected"); }} style={{ padding: '6px 12px', fontSize: '11px', fontWeight: 600, borderRadius: '6px', border: '1px solid #c3c6cf', cursor: 'pointer', backgroundColor: 'transparent', color: '#64748b' }}>Reject</button>
                               </div>
                             )}
                           </td>

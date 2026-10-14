@@ -5,7 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
 
 export default function DashboardHeader() {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, role, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
 
   const displayName = profile?.displayName || user?.displayName || "User";
@@ -29,12 +29,20 @@ export default function DashboardHeader() {
           <Link href="/listings" className="font-headline" style={{ fontWeight: 500, color: '#94a3b8', borderBottom: '2px solid transparent', paddingBottom: '4px', textDecoration: 'none' }}>
             Marketplace
           </Link>
-          <Link href="#" className="font-headline" style={{ fontWeight: 500, color: '#94a3b8', borderBottom: '2px solid transparent', paddingBottom: '4px', textDecoration: 'none' }}>
-            Reports
+          <Link href="/applications" className="font-headline" style={{ fontWeight: 500, color: '#94a3b8', borderBottom: '2px solid transparent', paddingBottom: '4px', textDecoration: 'none' }}>
+            Applications
           </Link>
         </nav>
       </div>
       <div className="flex items-center" style={{ gap: '8px' }}>
+        {role === 'owner' && (
+          <Link href="/properties/new"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#002446', color: '#ffffff', padding: '8px 18px', borderRadius: '8px', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add</span>
+            List Property
+          </Link>
+        )}
         <button className="p-2 rounded-full transition-colors" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
           <span className="material-symbols-outlined">notifications</span>
         </button>

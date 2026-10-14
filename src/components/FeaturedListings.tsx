@@ -57,7 +57,7 @@ export default function FeaturedListings() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" style={{ gap: '24px' }}>
             {properties.map((prop: AnyData) => (
-              <Link key={prop.id} href={`/property/${prop.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link key={prop.id} href={`/properties/${prop.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}>
                   {/* Image */}
                   <div style={{ position: 'relative', height: '220px', backgroundColor: '#f3f4f5' }}>
@@ -76,7 +76,7 @@ export default function FeaturedListings() {
                     <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#002446', marginBottom: '4px' }} className="truncate">{prop.title}</h3>
                     <p className="truncate" style={{ fontSize: '13px', color: '#64748b' }}>{prop.address || `${prop.city}, ${prop.state}`}</p>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px' }}>
-                      <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#002446' }}>${prop.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af' }}>/mo</span></span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#002446' }}>ETB {prop.monthlyRent?.toLocaleString()}<span style={{ fontSize: '12px', fontWeight: 500, color: '#9ca3af' }}>/mo</span></span>
                       <div className="flex" style={{ gap: '8px' }}>
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#43474e', padding: '4px 8px', backgroundColor: '#f3f4f5', borderRadius: '4px' }}>{prop.bedrooms} bed</span>
                         <span style={{ fontSize: '12px', fontWeight: 600, color: '#43474e', padding: '4px 8px', backgroundColor: '#f3f4f5', borderRadius: '4px' }}>{prop.bathrooms} bath</span>

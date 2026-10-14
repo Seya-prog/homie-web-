@@ -97,7 +97,7 @@ export default function OwnerDashboard() {
           <div className="absolute bottom-0 left-0 right-0 h-1 transition-all" style={{ backgroundColor: 'rgba(0,36,70,0.1)' }} />
           <span className="text-sm uppercase tracking-wider font-bold" style={{ color: '#9ca3af' }}>Total Revenue</span>
           <div className="mt-4 flex items-end justify-between">
-            <span className="text-2xl md:text-3xl font-extrabold tracking-tighter" style={{ color: '#002446' }}>${totalRevenue.toLocaleString()}</span>
+            <span className="text-2xl md:text-3xl font-extrabold tracking-tighter" style={{ color: '#002446' }}>ETB {totalRevenue.toLocaleString()}</span>
           </div>
         </div>
 
@@ -107,7 +107,7 @@ export default function OwnerDashboard() {
           <span className="text-sm uppercase tracking-wider font-bold" style={{ color: '#9ca3af' }}>Monthly Income</span>
           <div className="mt-4 flex items-end justify-between">
             <span className="text-2xl md:text-3xl font-extrabold tracking-tighter" style={{ color: '#002446' }}>
-              ${activeLeases.reduce((s: number, l: AnyData) => s + (l.monthlyRent || 0), 0).toLocaleString()}
+              ETB {activeLeases.reduce((s: number, l: AnyData) => s + (l.monthlyRent || 0), 0).toLocaleString()}
             </span>
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function OwnerDashboard() {
                   </div>
                 ))}
                 {pendingApps.map((app: AnyData) => (
-                  <div key={app.id} className="flex items-center" style={{ padding: '16px', gap: '16px', background: '#f3f4f5', borderRadius: '12px' }}>
+                  <Link key={app.id} href={`/applications/${app.id}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', padding: '16px', gap: '16px', background: '#f3f4f5', borderRadius: '12px', transition: 'transform 0.2s', width: '100%' }} className="hover:scale-[1.01]">
                     <div style={{ padding: '14px 10px', backgroundColor: '#e1e3e4', color: '#002446', borderRadius: '8px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <span className="material-symbols-outlined" style={{ fontSize: '28px' }}>person_search</span>
                     </div>
@@ -188,10 +188,10 @@ export default function OwnerDashboard() {
                       <p className="text-sm font-bold truncate" style={{ color: '#191c1d' }}>New Application</p>
                       <p className="text-xs truncate" style={{ color: '#43474e' }}>{app.applicant?.displayName} — {app.property?.title}</p>
                     </div>
-                    <button style={{ color: '#002446', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    <div style={{ color: '#002446' }}>
                       <span className="material-symbols-outlined">chevron_right</span>
-                    </button>
-                  </div>
+                    </div>
+                  </Link>
                 ))}
               </>
             )}
@@ -237,7 +237,7 @@ export default function OwnerDashboard() {
                       </td>
                       <td className="py-4 text-right">
                         <span className="text-sm font-extrabold" style={{ color: payment.status === 'Paid' ? '#002a1a' : '#914d00' }}>
-                          {payment.status === 'Paid' ? '+' : ''}${payment.amount?.toLocaleString() || "0"}
+                          {payment.status === 'Paid' ? '+' : ''}ETB {payment.amount?.toLocaleString() || "0"}
                         </span>
                       </td>
                     </tr>

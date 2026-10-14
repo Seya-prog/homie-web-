@@ -142,6 +142,24 @@ export async function listOwnerApplications() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (result.data as any)?.propertyApplications || [];
 }
+export async function getApplication(id: string) {
+  try {
+    const ref = queryRef(dc, "GetApplication", { id });
+    const result = await executeQuery(ref);
+    return (result.data as any)?.propertyApplication || null;
+  } catch (e: any) {
+    console.warn("GetApplication query failed, using client-side fallback list filtering:", e);
+    // Fallback: query lists that are already registered on the backend
+    const [ownerApps, seekerApps] = await Promise.all([
+      listOwnerApplications().catch(() => []),
+      listSeekerApplications().catch(() => [])
+    ]);
+    const all = [...ownerApps, ...seekerApps];
+    const norm = (s: string) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    return all.find((a: any) => norm(a.id) === norm(id)) || null;
+  }
+}
+
 
 // ========== LEASES ==========
 
@@ -304,4 +322,15 @@ export async function listPropertyReviews(propertyId: string) {
   const result = await executeQuery(ref);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (result.data as any)?.reviews || [];
+}
+
+export async function updateUserProfile(data: {
+  displayName?: string;
+  photoUrl?: string;
+  phoneNumber?: string;
+  bio?: string;
+  address?: string;
+}) {
+  const ref = mutationRef(dc, "UpdateUser", data);
+  return executeMutation(ref);
 }
