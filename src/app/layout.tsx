@@ -19,6 +19,7 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable @next/next/no-page-custom-font, @next/next/google-font-display */}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;700;800&display=swap"
           rel="stylesheet"
@@ -27,6 +28,7 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=block"
           rel="stylesheet"
         />
+        {/* eslint-enable @next/next/no-page-custom-font, @next/next/google-font-display */}
       </head>
       <body className="antialiased">
         <Providers>{children}</Providers>

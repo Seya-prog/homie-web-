@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
@@ -8,7 +9,6 @@ import DashboardHeader from "@/components/DashboardHeader";
 import { useAuth } from "@/context/AuthContext";
 import { getApplication, updateApplication, getProperty, createLease, updateProperty } from "@/lib/dataService";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyData = any;
 
 export default function ApplicationDetailPage({ params }: { params: Promise<{ id: string }> }) {

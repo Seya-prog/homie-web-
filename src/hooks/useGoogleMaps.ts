@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 
 export const GOOGLE_MAPS_API_KEY =
   process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ||
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
   "";
 
 function allLibrariesReady(): boolean {
@@ -16,19 +15,19 @@ function allLibrariesReady(): boolean {
 }
 
 export default function useGoogleMaps() {
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => {
+    return typeof window !== "undefined" && allLibrariesReady();
+  });
 
   useEffect(() => {
     // Already fully loaded
     if (typeof window !== "undefined" && allLibrariesReady()) {
-      setLoaded(true);
       return;
     }
 
     const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
     if (existingScript) {
       if (allLibrariesReady()) {
-        setLoaded(true);
         return;
       }
       // Poll until all libraries are loaded (script may be mid-load)

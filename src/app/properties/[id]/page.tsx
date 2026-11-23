@@ -102,7 +102,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     try {
       await deleteProperty(id);
       window.location.href = "/properties";
-    } catch (e) {
+    } catch {
       alert("Failed to delete property");
     }
   };
@@ -112,7 +112,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       await updateProperty(id, editData);
       setProperty({ ...property, ...editData });
       setIsEditing(false);
-    } catch (e) {
+    } catch {
       alert("Failed to save changes");
     }
   };
@@ -131,7 +131,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         monthlyIncome: applyForm.monthlyIncome ? parseFloat(applyForm.monthlyIncome) : undefined,
       });
       setApplySuccess(true);
-    } catch (e) {
+    } catch {
       alert("Failed to submit application. Please try again.");
     } finally {
       setApplySubmitting(false);
@@ -151,7 +151,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         notes: tourForm.notes,
       });
       setTourSuccess(true);
-    } catch (e) {
+    } catch {
       alert("Failed to schedule tour. Please try again.");
     } finally {
       setTourSubmitting(false);
@@ -249,6 +249,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                     borderRadius: '12px',
                   }}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     alt={`Photo ${i+1}`}
                     src={photoUrl}

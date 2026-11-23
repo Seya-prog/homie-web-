@@ -1,8 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User } from "firebase/auth";
-import { onAuthChange, getUserProfile, signOut, UserRole, UserProfile } from "@/lib/auth";
+import { onAuthChange, getUserProfile, signOut, UserRole, UserProfile, User } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -30,11 +29,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthChange(async (firebaseUser) => {
-      setUser(firebaseUser);
+    const unsubscribe = onAuthChange(async (authUser) => {
+      setUser(authUser);
 
-      if (firebaseUser) {
-        const userProfile = await getUserProfile(firebaseUser.uid);
+      if (authUser && authUser.id) {
+        const userProfile = await getUserProfile(authUser.id);
         setProfile(userProfile);
       } else {
         setProfile(null);
@@ -47,8 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = async () => {
-    if (user) {
-      const userProfile = await getUserProfile(user.uid);
+    if (user && user.id) {
+      const userProfile = await getUserProfile(user.id);
       setProfile(userProfile);
     }
   };

@@ -179,8 +179,8 @@ export default function AddPropertyPage() {
         yearBuilt: yearBuilt ? parseInt(yearBuilt) : undefined,
         latitude, longitude,
       });
-      // Force full page navigation so properties list re-fetches fresh data
-      window.location.href = "/properties";
+      // Navigate to properties list
+      router.push("/properties");
     } catch (e) { console.error(e); setSubmitting(false); }
   };
 

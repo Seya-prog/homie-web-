@@ -1,8 +1,9 @@
-import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
-import { storage } from "./firebase";
+import { supabase } from "./supabase";
+
+const BUCKET_NAME = "homie-media";
 
 /**
- * Upload a file to Firebase Storage and return its download URL.
+ * Upload a file to Supabase Storage and return its public download URL.
  * @param file - The file to upload
  * @param path - Storage path (e.g., "properties/abc123/photo1.jpg")
  * @param onProgress - Optional progress callback (0-100)
@@ -13,27 +14,31 @@ export async function uploadFile(
   path: string,
   onProgress?: (progress: number) => void
 ): Promise<string> {
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, file);
+  // Clean path to prevent leading/trailing slash issues
+  const cleanPath = path.replace(/^\/+/, "");
 
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        if (onProgress) onProgress(progress);
-      },
-      (error) => reject(error),
-      async () => {
-        const url = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(url);
-      }
-    );
-  });
+  if (onProgress) onProgress(20);
+
+  const { error } = await supabase.storage
+    .from(BUCKET_NAME)
+    .upload(cleanPath, file, {
+      cacheControl: "3600",
+      upsert: true,
+    });
+
+  if (error) {
+    console.error("Supabase storage upload error:", error);
+    throw error;
+  }
+
+  if (onProgress) onProgress(100);
+
+  const { data } = supabase.storage.from(BUCKET_NAME).getPublicUrl(cleanPath);
+  return data.publicUrl;
 }
 
 /**
- * Upload multiple files and return array of download URLs.
+ * Upload multiple files and return array of public download URLs.
  */
 export async function uploadMultipleFiles(
   files: File[],
@@ -119,12 +124,18 @@ export async function uploadLeaseDocument(
 }
 
 /**
- * Delete a file from Firebase Storage by its download URL.
+ * Delete a file from Supabase Storage by its public URL.
  */
 export async function deleteFileByUrl(url: string): Promise<void> {
   try {
-    const fileRef = ref(storage, url);
-    await deleteObject(fileRef);
+    const parts = url.split(`/${BUCKET_NAME}/`);
+    if (parts.length > 1) {
+      const filePath = parts[1].split("?")[0];
+      const { error } = await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+      if (error) {
+        console.error("Failed to delete file from Supabase storage:", error);
+      }
+    }
   } catch (error) {
     console.error("Failed to delete file:", error);
   }

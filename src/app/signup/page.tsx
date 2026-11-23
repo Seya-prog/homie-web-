@@ -34,15 +34,16 @@ export default function SignupPage() {
       await refreshProfile();
       router.push("/dashboard");
     } catch (err: unknown) {
-      const firebaseError = err as { code?: string; message?: string };
-      if (firebaseError.code === "auth/email-already-in-use") {
+      const msg = (err as Error)?.message || "";
+      const lower = msg.toLowerCase();
+      if (lower.includes("already registered") || lower.includes("user_already_exists") || lower.includes("email already in use")) {
         setError("An account with this email already exists.");
-      } else if (firebaseError.code === "auth/weak-password") {
+      } else if (lower.includes("password should be at least") || lower.includes("weak-password")) {
         setError("Password is too weak. Use at least 8 characters.");
-      } else if (firebaseError.code === "auth/invalid-email") {
+      } else if (lower.includes("valid email") || lower.includes("invalid-email")) {
         setError("Please enter a valid email address.");
       } else {
-        setError(firebaseError.message || "Something went wrong. Please try again.");
+        setError(msg || "Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -55,14 +56,14 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const { user, isNewUser } = await signInWithGoogle();
-      if (isNewUser) {
+      if (isNewUser && user) {
         await createGoogleUserProfile(user, selectedRole as UserRole);
       }
       await refreshProfile();
       router.push("/dashboard");
     } catch (err: unknown) {
-      const firebaseError = err as { message?: string };
-      setError(firebaseError.message || "Google sign-in failed.");
+      const msg = (err as Error)?.message || "Google sign-in failed.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -24,15 +24,14 @@ export default function LoginPage() {
       await refreshProfile();
       router.push("/dashboard");
     } catch (err: unknown) {
-      const firebaseError = err as { code?: string; message?: string };
-      if (firebaseError.code === "auth/user-not-found" || firebaseError.code === "auth/invalid-credential") {
+      const msg = (err as Error)?.message || "";
+      const lower = msg.toLowerCase();
+      if (lower.includes("invalid login credentials") || lower.includes("invalid_credentials") || lower.includes("user not found")) {
         setError("Invalid email or password.");
-      } else if (firebaseError.code === "auth/wrong-password") {
-        setError("Incorrect password.");
-      } else if (firebaseError.code === "auth/too-many-requests") {
+      } else if (lower.includes("rate limit") || lower.includes("too many requests")) {
         setError("Too many attempts. Please try again later.");
       } else {
-        setError(firebaseError.message || "Login failed. Please try again.");
+        setError(msg || "Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -44,15 +43,15 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const { user, isNewUser } = await signInWithGoogle();
-      if (isNewUser) {
+      if (isNewUser && user) {
         // New Google user — default to seeker, they can change later
         await createGoogleUserProfile(user, "seeker");
       }
       await refreshProfile();
       router.push("/dashboard");
     } catch (err: unknown) {
-      const firebaseError = err as { message?: string };
-      setError(firebaseError.message || "Google sign-in failed.");
+      const msg = (err as Error)?.message || "Google sign-in failed.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

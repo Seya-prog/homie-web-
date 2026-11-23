@@ -51,7 +51,7 @@ export default function FinancesPage() {
           setPenaltyValue(parsed.penaltyValue ?? 0);
           setPenaltyFrequency(parsed.penaltyFrequency ?? "once");
         }
-      } catch (e) {
+      } catch {
         // Ignored: profile.bio might be a normal biography string
       }
     }

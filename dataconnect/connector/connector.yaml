@@ -1,5 +1,0 @@
-connectorId: "homie-connector"
-generate:
-  javascriptSdk:
-    outputDir: "../../src/lib/dataconnect-sdk"
-    package: "@homie/dataconnect"

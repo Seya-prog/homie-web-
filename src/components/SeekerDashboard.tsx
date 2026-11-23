@@ -61,7 +61,7 @@ export default function SeekerDashboard() {
         if (typeof parsed === "object" && parsed !== null) {
           settings = { ...settings, ...parsed };
         }
-      } catch (e) {
+      } catch {
         // Ignored
       }
     }
