@@ -26,7 +26,9 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const msg = (err as Error)?.message || "";
       const lower = msg.toLowerCase();
-      if (lower.includes("invalid login credentials") || lower.includes("invalid_credentials") || lower.includes("user not found")) {
+      if (lower.includes("email not confirmed")) {
+        setError("Your email has not been confirmed yet. Please check your inbox for the verification link.");
+      } else if (lower.includes("invalid login credentials") || lower.includes("invalid_credentials") || lower.includes("user not found")) {
         setError("Invalid email or password.");
       } else if (lower.includes("rate limit") || lower.includes("too many requests")) {
         setError("Too many attempts. Please try again later.");

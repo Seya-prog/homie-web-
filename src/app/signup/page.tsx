@@ -11,7 +11,7 @@ type Role = "owner" | "seeker" | null;
 export default function SignupPage() {
   const router = useRouter();
   const { refreshProfile } = useAuth();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedRole, setSelectedRole] = useState<Role>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -30,9 +30,13 @@ export default function SignupPage() {
     setError("");
     setLoading(true);
     try {
-      await signUp(email, password, fullName, selectedRole as UserRole);
-      await refreshProfile();
-      router.push("/dashboard");
+      const { needsEmailConfirmation } = await signUp(email, password, fullName, selectedRole as UserRole);
+      if (needsEmailConfirmation) {
+        setStep(3);
+      } else {
+        await refreshProfile();
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const msg = (err as Error)?.message || "";
       const lower = msg.toLowerCase();
@@ -317,6 +321,81 @@ export default function SignupPage() {
                   </Link>
                 </p>
               </footer>
+            </section>
+
+            <p style={{ textAlign: 'center', marginTop: '48px', fontSize: '12px', color: '#73777f', fontWeight: 500, letterSpacing: '0.05em' }}>
+              © 2024 HOMIE REAL ESTATE. ALL RIGHTS RESERVED.
+            </p>
+          </main>
+        </div>
+      )}
+
+      {/* Step 3: Check Your Email Confirmation */}
+      {step === 3 && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+          <main style={{ width: '100%', maxWidth: '480px' }}>
+            <div style={{ marginBottom: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <Link href="/" style={{ textDecoration: 'none' }}>
+                <span className="font-headline" style={{ fontSize: '2.25rem', fontWeight: 900, color: '#002446', letterSpacing: '-0.05em' }}>Homie</span>
+              </Link>
+              <div style={{ height: '6px', width: '40px', backgroundColor: '#fc9430', borderRadius: '9999px', marginTop: '8px' }} />
+            </div>
+
+            <section style={{
+              backgroundColor: '#ffffff', padding: '40px',
+              borderRadius: '16px', border: '1px solid rgba(195,198,207,0.3)',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.04)', textAlign: 'center',
+            }}>
+              <div style={{
+                width: '72px', height: '72px', borderRadius: '50%',
+                backgroundColor: '#d3e3ff', color: '#002446',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 24px',
+              }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '36px' }}>mark_email_read</span>
+              </div>
+
+              <h2 className="font-headline" style={{ fontSize: '1.875rem', fontWeight: 800, color: '#002446', letterSpacing: '-0.025em', marginBottom: '12px' }}>
+                Check your email
+              </h2>
+
+              <p style={{ color: '#43474e', fontSize: '15px', lineHeight: 1.6, marginBottom: '8px' }}>
+                We sent a verification link to:
+              </p>
+              <p style={{ fontWeight: 700, color: '#002446', fontSize: '16px', marginBottom: '20px', wordBreak: 'break-all' }}>
+                {email}
+              </p>
+
+              <p style={{ color: '#73777f', fontSize: '13px', lineHeight: 1.5, marginBottom: '32px' }}>
+                Click the confirmation link in the email to activate your account and access your dashboard.
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <Link
+                  href="/login"
+                  style={{
+                    display: 'block', width: '100%', padding: '16px',
+                    backgroundColor: '#002446', color: '#ffffff',
+                    borderRadius: '12px', fontWeight: 700, fontSize: '15px',
+                    textDecoration: 'none', boxSizing: 'border-box',
+                    boxShadow: '0 4px 16px rgba(0,36,70,0.1)',
+                  }}
+                >
+                  Proceed to Login
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => { setStep(2); setError(""); }}
+                  style={{
+                    background: 'none', border: 'none', color: '#73777f',
+                    fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    padding: '8px', textDecoration: 'underline',
+                  }}
+                >
+                  Entered wrong email? Go back
+                </button>
+              </div>
             </section>
 
             <p style={{ textAlign: 'center', marginTop: '48px', fontSize: '12px', color: '#73777f', fontWeight: 500, letterSpacing: '0.05em' }}>

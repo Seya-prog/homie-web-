@@ -99,7 +99,8 @@ export async function signUp(
   password: string,
   fullName: string,
   role: UserRole
-): Promise<User> {
+): Promise<{ user: User; needsEmailConfirmation: boolean }> {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -109,6 +110,7 @@ export async function signUp(
         full_name: fullName,
         role,
       },
+      emailRedirectTo: `${origin}/dashboard`,
     },
   });
 
@@ -117,7 +119,9 @@ export async function signUp(
 
   const mappedUser = mapSupabaseUser(data.user)!;
   await createUserInDB(mappedUser, role, fullName);
-  return mappedUser;
+
+  const needsEmailConfirmation = !data.session;
+  return { user: mappedUser, needsEmailConfirmation };
 }
 
 export async function signIn(email: string, password: string): Promise<User> {
